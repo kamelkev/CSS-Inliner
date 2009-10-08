@@ -170,7 +170,8 @@ sub inlinify {
     #if an element matched a style within the document, convert it to inline
     foreach my $element (@{$elements}) {
       my $inline = $self->_expand({style => $$css{$key}});
-      $element->attr('style',$inline);
+      my $cur_style = $self->attr('style');
+      $element->attr('style',$cur_style . $inline);
     }
   }
 
