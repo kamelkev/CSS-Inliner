@@ -1,4 +1,3 @@
-#! /usr/local/bin/perl
 # $Id: CSS::Inliner.pm 2111 2009-10-08 12:00:00Z kamelkev $
 #
 # Copyright 2009 MailerMailer, LLC
@@ -13,7 +12,7 @@ $VERSION = 1.00;
 use strict;
 use warnings;
 
-use Carp; 
+use Carp;
 
 use HTML::TreeBuilder;
 use CSS::Tiny;
@@ -23,7 +22,7 @@ use HTML::Query 'query';
 
 =head1 NAME
 
-CSS::Inliner - Library for converting <style> blocks to inline styles.
+CSS::Inliner - Library for converting CSS <style> blocks to inline styles.
 
 =head1 SYNOPSIS
 
@@ -37,8 +36,10 @@ print $inliner->inlinify();
 
 =head1 DESCRIPTION
 
-Library for converting style blocks into inline styles. Specifically this is intended for the ease of generating html
-emails. This is useful as even in 2009 Gmail and Hotmail don't support top level <style> declarations.
+Library for converting CSS style blocks into inline styles in an HTML
+document.  Specifically this is intended for the ease of generating
+HTML emails.  This is useful as even in 2009 Gmail and Hotmail don't
+support top level <style> declarations.
 
 Methods implemented are:
 
@@ -48,11 +49,12 @@ Methods implemented are:
 
 =head2 new()
 
-Instantiates the Inliner object. Sets up class variables that are used during file parsing/processing.
+Instantiates the Inliner object. Sets up class variables that are used
+during file parsing/processing.
 
 =cut
 
-sub new { 
+sub new {
   my $this = shift;
   my $class = ref($this) || $this;
 
@@ -72,11 +74,14 @@ sub new {
 
 =pod
 
-=head2 read_file()
+=head2 read_file( params )
 
-Opens and reads an HTML file that supposedly contains both html and a style declaration. It subsequently calls the read() method automatically.
+Opens and reads an HTML file that supposedly contains both HTML and a
+style declaration.  It subsequently calls the read() method
+automatically.
 
-This method requires you to pass in a params hash that contains a filename argument. For example:
+This method requires you to pass in a params hash that contains a
+filename argument. For example:
 
 $self->read_file({filename => 'myfile.html'});
 
@@ -99,14 +104,16 @@ sub read_file {
 
 =pod
 
-=head2 read()
+=head2 read( params )
 
-Reads html data and parses it. The intermediate data is stored in class variables.
+Reads html data and parses it.  The intermediate data is stored in
+class variables.
 
-The <style> block is ripped out of the html here, and stored separately. Class/ID/Names used in the
-markup are left alone.
+The <style> block is ripped out of the html here, and stored
+separately. Class/ID/Names used in the markup are left alone.
 
-This method requires you to pass in a params hash that contains scalar html data. For example:
+This method requires you to pass in a params hash that contains scalar
+html data. For example:
 
 $self->read({html => $html});
 
@@ -139,11 +146,13 @@ sub read {
 
 =head2 inlinify()
 
-Processes the html data that was entered through either 'read' or 'read_file', returns a scalar that contains
-a composite chunk of html that has inline styles instead of a top level <style> declaration.
+Processes the html data that was entered through either 'read' or
+'read_file', returns a scalar that contains a composite chunk of html
+that has inline styles instead of a top level <style> declaration.
 
-Note that the class/id/names that are used within the markup are left alone, but aren't no-ops as there is no
-<style> block in the resulting html.
+Note that the class/id/names that are used within the markup are left
+alone, but aren't no-ops as there is no <style> block in the resulting
+html.
 
 =cut
 
@@ -220,3 +229,18 @@ sub _expand {
 
   return $inline;
 }
+
+1;
+
+=pod
+
+=head1 AUTHOR
+
+Kevin Kamel <C<kamelkev@mailermailer.com>>
+
+=head1 LICENSE
+
+This module is Copyright 2009 Khera Communications, Inc.  It is
+licensed under the same terms as Perl itself.
+
+=cut
