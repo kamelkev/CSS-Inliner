@@ -5,7 +5,7 @@
 # Based loosely on the TamTam RubyForge project:
 # http://tamtam.rubyforge.org/
 
-package CSS::Inliner;
+package Inliner;
 
 use strict;
 use warnings;
@@ -180,7 +180,12 @@ sub inlinify {
     #if an element matched a style within the document, convert it to inline
     foreach my $element (@{$elements}) {
       my $inline = $self->_expand({style => $$css{$key}});
-      my $cur_style = $self->attr('style');
+
+      my $cur_style = '';
+      if (defined($element->attr('style'))) {
+        $cur_style = $element->attr('style');
+      }
+
       $element->attr('style',$cur_style . $inline);
     }
   }
