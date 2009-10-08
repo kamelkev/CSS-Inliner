@@ -235,6 +235,10 @@ sub _expand {
 
 =pod
 
+=head1 Sponsor
+
+This code has been developed under sponsorship of MailerMailer LLC, http://www.mailermailer.com/
+
 =head1 AUTHOR
 
 Kevin Kamel <C<kamelkev@mailermailer.com>>
