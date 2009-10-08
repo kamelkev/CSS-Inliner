@@ -1,11 +1,11 @@
 # $Id$
 #
-# Copyright 2009 MailerMailer, LLC
+# Copyright 2009 MailerMailer, LLC - http://www.mailermailer.com
 #
 # Based loosely on the TamTam RubyForge project:
 # http://tamtam.rubyforge.org/
 
-package Inliner;
+package CSS::Inliner;
 
 use strict;
 use warnings;
