@@ -11,7 +11,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION);
-$VERSION = sprintf "%d", q$Revision$ =~ /(\d+)/;
+$VERSION = sprintf "%d", q$Revision: 2298 $ =~ /(\d+)/;
 
 use Carp;
 
