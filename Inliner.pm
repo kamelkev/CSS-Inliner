@@ -7,10 +7,11 @@
 
 package CSS::Inliner;
 
-$VERSION = 1.00;
-
 use strict;
 use warnings;
+
+use vars qw($VERSION);
+$VERSION = sprintf "%d", q$Revision: 2170 $ =~ /(\d+)/;
 
 use Carp;
 
