@@ -1,4 +1,4 @@
-# $Id: CSS::Inliner.pm 2111 2009-10-08 12:00:00Z kamelkev $
+# $Id$
 #
 # Copyright 2009 MailerMailer, LLC
 #
@@ -11,7 +11,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION);
-$VERSION = sprintf "%d", q$Revision: 2298 $ =~ /(\d+)/;
+$VERSION = sprintf "%d", q$Revision$ =~ /(\d+)/;
 
 use Carp;
 
