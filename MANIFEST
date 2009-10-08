@@ -1,6 +1,3 @@
 MANIFEST
-ca-bundle.crt
 Makefile.PL
-CSS-Inliner.pm
 README
-mkcabundle
