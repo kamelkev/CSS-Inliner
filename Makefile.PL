@@ -8,7 +8,7 @@ WriteMakefile(
     dist => {
 	PREOP => 'pod2text Inliner.pm > README; perl mkcabundle > ca-bundle.crt',
     },
-    VERSION_FROM => 'CSS-Inliner.pm',
+    VERSION_FROM => 'Inliner.pm',
     AUTHOR => 'Kevin Kamel <kamelkev@mailermailer.com>',
     ABSTRACT => 'Library for converting <style> blocks to inline styles',
     LICENSE => 'perl',
