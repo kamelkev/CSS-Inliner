@@ -128,6 +128,7 @@ sub read {
   }
 
   my $tree = new HTML::TreeBuilder();
+  $tree->store_comments(1);
   $tree->parse($$params{html});
 
   #rip all the style blocks out of html tree, and return that separately
