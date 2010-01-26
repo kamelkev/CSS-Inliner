@@ -2,3 +2,8 @@
 
 	* Initial release to world.
 
+2010-01-26  Kevin Kamel <kamelkev@mailermailer.com>
+
+	* Updates by Vivek Khera (vivek@khera.org)
+          - Remove comment stripping of HTML passed through the Inliner
+
