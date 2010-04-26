@@ -191,7 +191,13 @@ sub inlinify {
     }
   }
 
-  return $tree->as_HTML();
+  # The entities list is the do-not-encode string from HTML::Entities
+  # with the single quote added.
+
+  # 3rd argument below overrides the optional end tag, which for HTML::Element
+  # is just p, li, dt, dd - tags we want terminated for our purposes
+
+  return $tree->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
 }
 
 ##################################################################
