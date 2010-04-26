@@ -7,3 +7,10 @@
 	* Updates by Vivek Khera (vivek@khera.org)
           - Remove comment stripping of HTML passed through the Inliner
 
+2010-04-26  Kevin Kamel <kamelkev@mailermailer.com>
+
+	* Suggested update by Vivek Khera (vivek@khera.org)
+          - adjust TreeParser to override skippable end tags
+        * Adjust TreeParser to allow html comments to persist through
+          processing
+
