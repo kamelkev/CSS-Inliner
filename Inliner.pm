@@ -176,6 +176,10 @@ sub inlinify {
   my $tree = $self->{html_tree};
 
   foreach my $key (keys %{$css}) {
+
+    #skip over psuedo selectors, they are not mappable the same
+    next if $key =~ /\w:(?:active|focus|hover|link|visited)\b/;
+
     my $elements = $tree->query($key);
 
     #if an element matched a style within the document, convert it to inline
