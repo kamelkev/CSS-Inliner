@@ -218,7 +218,8 @@ sub _get_style {
   foreach my $i (@{$$params{tree_content}}) {
     next unless ref $i eq 'HTML::Element';
 
-    if (($i->tag eq 'style') && ($i->attr('media') =~ m/\b(all|screen)\b/)) {
+    #process this node if the html media type is screen, all or undefined (which defaults to screen)
+    if (($i->tag eq 'style') && (!$i->attr('media') || $i->attr('media') =~ m/\b(all|screen)\b/)) {
 
       foreach my $item ($i->content_list()) {
           $style .= $item;
