@@ -1,16 +1,28 @@
-2009-10-08  Kevin Kamel <kamelkev@mailermailer.com>
+2304	2009-10-08	Kevin Kamel <kamelkev@mailermailer.com>
 
 	* Initial release to world.
 
-2010-01-26  Kevin Kamel <kamelkev@mailermailer.com>
+2307	2009-10-08	Kevin Kamel <kamelkev@mailermailer.com>
+
+	* Tweaks to do correct release to CPAN
+
+2534	2010-01-26	Kevin Kamel <kamelkev@mailermailer.com>
 
 	* Updates by Vivek Khera (vivek@khera.org)
-          - Remove comment stripping of HTML passed through the Inliner
+	  - Remove comment stripping of HTML passed through the Inliner
 
-2010-04-26  Kevin Kamel <kamelkev@mailermailer.com>
+2536	2010-04-26	Kevin Kamel <kamelkev@mailermailer.com>
 
 	* Suggested update by Vivek Khera (vivek@khera.org)
-          - adjust TreeParser to override skippable end tags
-        * Adjust TreeParser to allow html comments to persist through
-          processing
+	  - adjust TreeParser to override skippable end tags
+	* Adjust TreeParser to allow html comments to persist through
+	  processing
+
+2541	2010-04-27	Kevin Kamel <kamelkev@mailermailer.com>
+
+	* Include a number of updates as suggested by Michael Peters
+	  - do not skip over style blocks with undefined media types
+	  - add feature to take previously defined HTML::TreeParser so
+            users can modify the parameters the TreeParser has
+	  - skip css psuedo attributes that cannot be inlined
 
