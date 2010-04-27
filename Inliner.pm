@@ -56,18 +56,15 @@ during file parsing/processing.
 =cut
 
 sub new {
-  my $this = shift;
-  my $class = ref($this) || $this;
+  my ($proto, $params) = @_;
+
+  my $class = ref($proto) || $proto;
 
   my $self = {
               css => undef,
               html => undef,
-              html_tree => undef,
+              html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
              };
-
-  if (@_) {
-    croak "Invalid number of arguments";
-  }
 
   bless $self, $class;
   return $self;
@@ -127,7 +124,7 @@ sub read {
     croak "You must pass in hash params that contains html data";
   }
 
-  my $tree = new HTML::TreeBuilder();
+  my $tree = $self->{html_tree};
   $tree->store_comments(1);
   $tree->parse($$params{html});
 
@@ -137,9 +134,6 @@ sub read {
 
   #stash the stylesheets
   $self->{css} = $style;
-
-  #keep the html tree for later so we don't have to reparse
-  $self->{html_tree} = $tree;
 
   return();
 }
