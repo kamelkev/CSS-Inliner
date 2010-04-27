@@ -18,7 +18,7 @@
 	* Adjust TreeParser to allow html comments to persist through
 	  processing
 
-2541	2010-04-27	Kevin Kamel <kamelkev@mailermailer.com>
+2540	2010-04-27	Kevin Kamel <kamelkev@mailermailer.com>
 
 	* Include a number of updates as suggested by Michael Peters
 	  - do not skip over style blocks with undefined media types
