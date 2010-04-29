@@ -172,7 +172,10 @@ sub inlinify {
   foreach my $key (keys %{$css}) {
 
     #skip over psuedo selectors, they are not mappable the same
-    next if $key =~ /\w:(?:active|focus|hover|link|visited)\b/;
+    next if $key =~ /\w:(?:active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter)\b/io;
+
+    #skip over @import or anything else that might start with @ - not inlineable
+    next if $key =~ /^\@/io;
 
     my $elements = $tree->query($key);
 
