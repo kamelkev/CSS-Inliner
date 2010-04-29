@@ -20,9 +20,13 @@
 
 2540	2010-04-27	Kevin Kamel <kamelkev@mailermailer.com>
 
-	* Include a number of updates as suggested by Michael Peters
+	* Include a number of updates as suggested by Michael Peters <mpeters@plusthree.com>
 	  - do not skip over style blocks with undefined media types
 	  - add feature to take previously defined HTML::TreeParser so
             users can modify the parameters the TreeParser has
 	  - skip css psuedo attributes that cannot be inlined
 
+2544	2010-04-27	Kevin Kamel <kamelkev@mailermailer.com>
+
+        * Update the regex for skipping over non-inlineable psuedo attributes
+        * In addition to skipping psuedo attributes, skip over @, like @import
