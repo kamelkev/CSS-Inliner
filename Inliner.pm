@@ -132,7 +132,8 @@ sub read {
   #the remaining html tree has no style block(s) now
   my $style = $self->_get_style({tree_content => $tree->content()});
 
-  #stash the stylesheets
+  #stash the data
+  $self->{html} = $$params{html};
   $self->{css} = $style;
 
   return();
@@ -159,46 +160,54 @@ sub inlinify {
     croak "You must instantiate this class in order to properly use it";
   }
 
-  unless ($self->{css} && $self->{html_tree}) {
+  unless ($self->{html} && $self->{html_tree}) {
     croak "You must instantiate and read in your content before inlinifying";
   }
 
-  #parse and store the stylesheet as a hash object
-  my $css = CSS::Tiny->read_string($self->{css});
+  my $html;
+  if (exists $self->{css}) {
+    #parse and store the stylesheet as a hash object
+    my $css = CSS::Tiny->read_string($self->{css});
 
-  #we still have our tree, let's reuse it
-  my $tree = $self->{html_tree};
+    #we still have our tree, let's reuse it
+    my $tree = $self->{html_tree};
 
-  foreach my $key (keys %{$css}) {
+    foreach my $key (keys %{$css}) {
 
-    #skip over psuedo selectors, they are not mappable the same
-    next if $key =~ /\w:(?:active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter)\b/io;
+      #skip over psuedo selectors, they are not mappable the same
+      next if $key =~ /\w:(?:active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter)\b/io;
 
-    #skip over @import or anything else that might start with @ - not inlineable
-    next if $key =~ /^\@/io;
+      #skip over @import or anything else that might start with @ - not inlineable
+      next if $key =~ /^\@/io;
 
-    my $elements = $tree->query($key);
+      my $elements = $tree->query($key);
 
-    #if an element matched a style within the document, convert it to inline
-    foreach my $element (@{$elements}) {
-      my $inline = $self->_expand({style => $$css{$key}});
+      #if an element matched a style within the document, convert it to inline
+      foreach my $element (@{$elements}) {
+        my $inline = $self->_expand({style => $$css{$key}});
 
-      my $cur_style = '';
-      if (defined($element->attr('style'))) {
-        $cur_style = $element->attr('style');
+        my $cur_style = '';
+        if (defined($element->attr('style'))) {
+          $cur_style = $element->attr('style');
+        }
+
+        $element->attr('style',$cur_style . $inline);
       }
-
-      $element->attr('style',$cur_style . $inline);
     }
+
+    # The entities list is the do-not-encode string from HTML::Entities
+    # with the single quote added.
+
+    # 3rd argument overrides the optional end tag, which for HTML::Element
+    # is just p, li, dt, dd - tags we want terminated for our purposes
+
+    $html = $tree->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+  }
+  else {
+    $html = $self->{html};
   }
 
-  # The entities list is the do-not-encode string from HTML::Entities
-  # with the single quote added.
-
-  # 3rd argument below overrides the optional end tag, which for HTML::Element
-  # is just p, li, dt, dd - tags we want terminated for our purposes
-
-  return $tree->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+  return $html;
 }
 
 ##################################################################
