@@ -18,6 +18,7 @@ use Carp;
 use HTML::TreeBuilder;
 use CSS::Tiny;
 use HTML::Query 'query';
+use Tie::IxHash;
 
 =pod
 
@@ -167,7 +168,9 @@ sub inlinify {
   my $html;
   if (exists $self->{css}) {
     #parse and store the stylesheet as a hash object
-    my $css = CSS::Tiny->read_string($self->{css});
+    my $css = CSS::Tiny->new();
+    tie %$css, 'Tie::IxHash'; # to preserve order of rules
+    $css->read_string($self->{css});
 
     #we still have our tree, let's reuse it
     my $tree = $self->{html_tree};
