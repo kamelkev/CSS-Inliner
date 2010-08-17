@@ -1,5 +1,4 @@
 use Test::More;
-use Test::LongString;
 use CSS::Inliner;
 plan(tests => 8);
 
@@ -33,12 +32,12 @@ my $inliner = CSS::Inliner->new();
 $inliner->read({html => $html});
 my $inlined = $inliner->inlinify();
 
-contains_string($inlined, q(<h1 class="alert" style="font-size:20px;color:red;">Lorem ipsum), 'h1.alert rule inlined');
-contains_string($inlined, q(<h1 class="cool" style="font-size:20px;color:blue;">Consectetur), 'h1.cool rule inlined');
-contains_string($inlined, q(<p class="intro" style="color:#555555;font-size:10px;">Aliquam), '.intro rule inlined');
-contains_string($inlined, q(<p style="color:#123123;font-size:8px;">Phasellus), 'div p rule inlined');
-contains_string($inlined, q(<p style="color:#123123;font-size:8px;">Nunc augue), 'div p rule inlined again');
-contains_string($inlined, q(<p>Nulla), 'no rule for just "p"');
-lacks_string($inlined, q(<style), 'no style blocks left');
-lacks_string($inlined, q(yellow), ':hover pseudo-attribute was ignored');
+ok($inlined =~ m/<h1 class="alert" style="font-size:20px;color:red;">Lorem ipsum/, 'h1.alert rule inlined');
+ok($inlined =~ m/<h1 class="cool" style="font-size:20px;color:blue;">Consectetur/, 'h1.cool rule inlined');
+ok($inlined =~ m/<p class="intro" style="color:#555555;font-size:10px;">Aliquam/, '.intro rule inlined');
+ok($inlined =~ m/<p style="color:#123123;font-size:8px;">Phasellus/, 'div p rule inlined');
+ok($inlined =~ m/<p style="color:#123123;font-size:8px;">Nunc augue/, 'div p rule inlined again');
+ok($inlined =~ m/<p>Nulla/, 'no rule for just "p"');
+ok($inlined !~ m/<style/, 'no style blocks left');
+ok($inlined !~ m/yellow/, ':hover pseudo-attribute was ignored');
 

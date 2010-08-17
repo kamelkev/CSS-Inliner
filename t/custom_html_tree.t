@@ -1,5 +1,4 @@
 use Test::More;
-use Test::LongString;
 use HTML::TreeBuilder;
 use CSS::Inliner;
 plan(tests => 6);
@@ -29,16 +28,16 @@ my $inliner = CSS::Inliner->new({ html_tree => $html_tree });
 $inliner->read({html => $html});
 my $inlined = $inliner->inlinify();
 
-contains_string($inlined, q(<h1 style="color:red;font-size:20px;">Howdy!</h1>), 'h1 rule inlined');
-lacks_string($inlined, q(<style), 'no style blocks left');
-lacks_string($inlined, '<foo>', 'ignoring unknown elements');
+ok($inlined =~ m/<h1 style="color:red;font-size:20px;">Howdy!<\/h1>/, 'h1 rule inlined');
+ok($inlined !~ m/<style/, 'no style blocks left');
+ok($inlined !~ m/<foo>/, 'ignoring unknown elements');
 
 $html_tree->ignore_unknown(0);
 $inliner = CSS::Inliner->new({ html_tree => $html_tree });
 $inliner->read({html => $html});
 $inlined = $inliner->inlinify();
 
-contains_string($inlined, q(<h1 style="color:red;font-size:20px;">Howdy!</h1>), 'h1 rule inlined');
-lacks_string($inlined, q(<style), 'no style blocks left');
-contains_string($inlined, '<foo>', 'ignoring unknown elements');
+ok($inlined =~ m/<h1 style="color:red;font-size:20px;">Howdy!<\/h1>/, 'h1 rule inlined');
+ok($inlined !~ m/<style/, 'no style blocks left');
+ok($inlined =~ m/<foo>/, 'ignoring unknown elements');
 

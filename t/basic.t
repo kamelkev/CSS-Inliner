@@ -1,5 +1,4 @@
 use Test::More;
-use Test::LongString;
 plan(tests => 5);
 
 use_ok('CSS::Inliner');
@@ -25,8 +24,7 @@ my $inliner = CSS::Inliner->new();
 $inliner->read({html => $html});
 my $inlined = $inliner->inlinify();
 
-contains_string($inlined, q(<h1 style="color:red;font-size:20px;">Howdy!</h1>), 'h1 rule inlined');
-contains_string($inlined, q(<h2 style="color:blue;font-size:17px;">Let's Play</h2>), 'h2 rule inlined');
-contains_string($inlined, q(<p>Got any games?</p>), 'p not styled');
-lacks_string($inlined, q(<style), 'no style blocks left');
-
+ok($inlined =~ m/<h1 style="color:red;font-size:20px;">Howdy!<\/h1>/, 'h1 rule inlined');
+ok($inlined =~ m/<h2 style="color:blue;font-size:17px;">Let's Play<\/h2>/, 'h2 rule inlined');
+ok($inlined =~ m/<p>Got any games\?<\/p>/, 'p not styled');
+ok($inlined !~ m/<style/, 'no style blocks left');
