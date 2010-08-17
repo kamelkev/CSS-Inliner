@@ -6,6 +6,7 @@ WriteMakefile(
 	'HTML::TreeBuilder' => 0,
         'CSS::Tiny' => 0,
         'HTML::Query' => 0,
+        'Test::More' => 0
     },
     dist => {
 	PREOP => 'pod2text Inliner.pm > README',
