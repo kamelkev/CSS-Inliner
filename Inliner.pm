@@ -231,6 +231,10 @@ sub _get_style {
     if (($i->tag eq 'style') && (!$i->attr('media') || $i->attr('media') =~ m/\b(all|screen)\b/)) {
 
       foreach my $item ($i->content_list()) {
+          # remove HTML comment markers
+          $item =~ s/<!--//mg;
+          $item =~ s/-->//mg;
+
           $style .= $item;
       }
       $i->delete();
