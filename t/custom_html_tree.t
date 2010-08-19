@@ -28,7 +28,7 @@ my $inliner = CSS::Inliner->new({ html_tree => $html_tree });
 $inliner->read({html => $html});
 my $inlined = $inliner->inlinify();
 
-ok($inlined =~ m/<h1 style="color:red;font-size:20px;">Howdy!<\/h1>/, 'h1 rule inlined');
+ok($inlined =~ m/<h1 style="color: red; font-size: 20px;">Howdy!<\/h1>/, 'h1 rule inlined');
 ok($inlined !~ m/<style/, 'no style blocks left');
 ok($inlined !~ m/<foo>/, 'ignoring unknown elements');
 
@@ -37,7 +37,7 @@ $inliner = CSS::Inliner->new({ html_tree => $html_tree });
 $inliner->read({html => $html});
 $inlined = $inliner->inlinify();
 
-ok($inlined =~ m/<h1 style="color:red;font-size:20px;">Howdy!<\/h1>/, 'h1 rule inlined');
+ok($inlined =~ m/<h1 style="color: red; font-size: 20px;">Howdy!<\/h1>/, 'custom html_tree: h1 rule inlined');
 ok($inlined !~ m/<style/, 'no style blocks left');
 ok($inlined =~ m/<foo>/, 'ignoring unknown elements');
 

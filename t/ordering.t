@@ -1,5 +1,5 @@
 use Test::More;
-plan(tests => 1);
+plan(tests => 8);
 
 use_ok('CSS::Inliner');
 
@@ -27,16 +27,20 @@ my $inliner = CSS::Inliner->new();
 $inliner->read({html => $html});
 $inliner->_get_css();
 
+#shuffle stored styles around
+my $shuffle1 = 0;
+foreach (keys %{$css}) { $shuffle1++;}
 
-#attempt to shuffle up the rules
-while (( $key, $value ) = each %{$inliner->_get_css()} ) {
-    warn "$key is colored $value.\n";
-}
+#shuffle stored styles around more
+my $shuffle2 = 0;
+while ( each %{$css} ) {$shuffle2++;}
 
-#inline the document using the supposed shuffled rules
 my $inlined = $inliner->inlinify();
 
-warn $inlined;
-
-
-ok($inlined =~ m/<h1 style="color:red;color:blue; font-weight: bold;">Howdy!<\/h1>/, 'h1 rule inlined');
+ok($shuffle1 == $shuffle2);
+ok($inlined =~ m/<h1 style="color: green; font-size: 10px; font-weight: bold;">Howdy!<\/h1>/, 'order #1');
+ok($inlined =~ m/<h1 style="color: green; font-size: 10px; font-weight: bold;">Ahoy!<\/h1>/, 'order #2');
+ok($inlined =~ m/<h1 style="color: green; font-size: 10px; font-weight: bold;">Hello!<\/h1>/, 'order #3');
+ok($inlined =~ m/<h1 style="color: green; font-size: 10px; font-weight: bold;">Hola!<\/h1>/, 'order #4');
+ok($inlined =~ m/<h1 style="color: green; font-size: 10px; font-weight: bold;">Gudentag!<\/h1>/, 'order #5');
+ok($inlined =~ m/<h1 style="color: green; font-size: 10px; font-weight: bold;">Dziendobre!<\/h1>/, 'order #6');

@@ -66,6 +66,7 @@ sub new {
               css => CSS::Tiny->new(),
               html => undef,
               html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
+              keep_attrs => defined($$params{keep_attrs}) ? 1 : 0,
              };
 
   tie %{$self->{css}}, 'Tie::IxHash'; # configure tiny to preserve order of rules
@@ -277,6 +278,12 @@ sub _collapse_inline_styles {
       $i->attr('style', $collapsed_style); 
     }
 
+    #unless we have specifically asked to keep the inlined attrs, remove them
+    unless ($self->_keep_attrs()) {
+      $i->attr('id',undef);
+      $i->attr('class',undef);
+    }
+
     # Recurse down tree
     if (defined $i->content) {
       $self->_collapse_inline_styles({content => $i->content});
@@ -294,6 +301,12 @@ sub _get_css {
   my ($self,$params) = @_;
 
   return $self->{css};
+}
+
+sub _keep_attrs {
+  my ($self,$params) = @_;
+
+  return $self->{keep_attrs};
 }
 
 sub _set_html {
