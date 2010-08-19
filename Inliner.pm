@@ -28,13 +28,13 @@ CSS::Inliner - Library for converting CSS <style> blocks to inline styles.
 
 =head1 SYNOPSIS
 
-use Inliner;
+ use Inliner;
 
-my $inliner = new Inliner();
+ my $inliner = new Inliner();
 
-$inliner->read_file({filename => 'myfile.html'});
+ $inliner->read_file({filename => 'myfile.html'});
 
-print $inliner->inlinify();
+ print $inliner->inlinify();
 
 =head1 DESCRIPTION
 
@@ -43,18 +43,20 @@ document.  Specifically this is intended for the ease of generating
 HTML emails.  This is useful as even in 2009 Gmail and Hotmail don't
 support top level <style> declarations.
 
-Methods implemented are:
+=head1 CONSTRUCTOR
 
-=cut
+=over 4
 
-=pod
-
-=head2 new()
+=item new ([ OPTIONS ])
 
 Instantiates the Inliner object. Sets up class variables that are used
-during file parsing/processing.
+during file parsing/processing. Possible options are:
 
-=cut
+B<html_tree> (optional). Pass in a custom instance of HTML::Treebuilder
+
+B<strip_attrs> (optional). Remove all "id" and "class" attributes during inlining
+
+=back
 
 sub new {
   my ($proto, $params) = @_;
@@ -75,9 +77,15 @@ sub new {
   return $self;
 }
 
+=head1 METHODS
+
+=cut
+
 =pod
 
-=head2 read_file( params )
+=over 4
+
+=item read_file( params )
 
 Opens and reads an HTML file that supposedly contains both HTML and a
 style declaration.  It subsequently calls the read() method
@@ -107,7 +115,7 @@ sub read_file {
 
 =pod
 
-=head2 read( params )
+=item read( params )
 
 Reads html data and parses it.  The intermediate data is stored in
 class variables.
@@ -145,15 +153,13 @@ sub read {
 
 =pod
 
-=head2 inlinify()
+=item inlinify()
 
 Processes the html data that was entered through either 'read' or
 'read_file', returns a scalar that contains a composite chunk of html
 that has inline styles instead of a top level <style> declaration.
 
-Note that the class/id/names that are used within the markup are left
-alone, but aren't no-ops as there is no <style> block in the resulting
-html.
+=back
 
 =cut
 
@@ -348,6 +354,11 @@ This code has been developed under sponsorship of MailerMailer LLC, http://www.m
 =head1 AUTHOR
 
 Kevin Kamel <C<kamelkev@mailermailer.com>>
+
+=head1 CONTRIBUTORS
+
+Vivek Khera <C<vivek@khera.org>>
+Michael Peters <C<wonko@cpan.org>>
 
 =head1 LICENSE
 
