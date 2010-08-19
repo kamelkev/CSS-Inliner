@@ -62,10 +62,13 @@ sub new {
   my $class = ref($proto) || $proto;
 
   my $self = {
-              css => undef,
+              stylesheet => undef,
+              css => CSS::Tiny->new(),
               html => undef,
               html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
              };
+
+  tie %{$self->{css}}, 'Tie::IxHash'; # configure tiny to preserve order of rules
 
   bless $self, $class;
   return $self;
@@ -125,17 +128,16 @@ sub read {
     croak "You must pass in hash params that contains html data";
   }
 
-  my $tree = $self->{html_tree};
-  $tree->store_comments(1);
-  $tree->parse($$params{html});
+  $self->_get_tree()->store_comments(1);
+  $self->_get_tree()->parse($$params{html});
 
   #rip all the style blocks out of html tree, and return that separately
   #the remaining html tree has no style block(s) now
-  my $style = $self->_get_style({tree_content => $tree->content()});
+  my $stylesheet = $self->_parse_stylesheet({tree_content => $self->_get_tree()->content()});
 
-  #stash the data
-  $self->{html} = $$params{html};
-  $self->{css} = $style;
+  #save the data
+  $self->_set_html({ html => $$params{html} });
+  $self->_set_stylesheet({ stylesheet => $stylesheet});
 
   return();
 }
@@ -161,21 +163,16 @@ sub inlinify {
     croak "You must instantiate this class in order to properly use it";
   }
 
-  unless ($self->{html} && $self->{html_tree}) {
+  unless ($self->{html} && defined $self->_get_tree()) {
     croak "You must instantiate and read in your content before inlinifying";
   }
 
   my $html;
-  if (exists $self->{css}) {
+  if (defined $self->_get_css()) {
     #parse and store the stylesheet as a hash object
-    my $css = CSS::Tiny->new();
-    tie %$css, 'Tie::IxHash'; # to preserve order of rules
-    $css->read_string($self->{css});
+    $self->_get_css()->read_string($self->{stylesheet});
 
-    #we still have our tree, let's reuse it
-    my $tree = $self->{html_tree};
-
-    foreach my $key (keys %{$css}) {
+    foreach my $key (keys %{$self->_get_css()}) {
 
       #skip over psuedo selectors, they are not mappable the same
       next if $key =~ /\w:(?:active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter)\b/io;
@@ -183,11 +180,11 @@ sub inlinify {
       #skip over @import or anything else that might start with @ - not inlineable
       next if $key =~ /^\@/io;
 
-      my $elements = $tree->query($key);
+      my $elements = $self->_get_tree()->query($key);
 
       #if an element matched a style within the document, convert it to inline
       foreach my $element (@{$elements}) {
-        my $inline = $self->_expand({style => $$css{$key}});
+        my $inline = $self->_expand({properties => $self->_get_css()->{$key}});
 
         my $cur_style = '';
         if (defined($element->attr('style'))) {
@@ -198,13 +195,17 @@ sub inlinify {
       }
     }
 
+    #at this point we have a document that contains the expanded inlined stylesheet
+    #BUT we need to collapse the properties to remove duplicate overridden styles
+
+
     # The entities list is the do-not-encode string from HTML::Entities
     # with the single quote added.
 
     # 3rd argument overrides the optional end tag, which for HTML::Element
     # is just p, li, dt, dd - tags we want terminated for our purposes
 
-    $html = $tree->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+    $html = $self->_get_tree()->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
   }
   else {
     $html = $self->{html};
@@ -213,16 +214,17 @@ sub inlinify {
   return $html;
 }
 
-##################################################################
-#                                                                #
-# The following are all class methods and are not for normal use #
-#                                                                #
-##################################################################
+####################################################################
+#                                                                  #
+# The following are all private methods and are not for normal use #
+# I am working to finalize the get/set methods to make them public #
+#                                                                  #
+####################################################################
 
-sub _get_style {
+sub _parse_stylesheet {
   my ($self,$params) = @_;
 
-  my $style = '';
+  my $stylesheet = '';
 
   foreach my $i (@{$$params{tree_content}}) {
     next unless ref $i eq 'HTML::Element';
@@ -235,27 +237,55 @@ sub _get_style {
           $item =~ s/<!--//mg;
           $item =~ s/-->//mg;
 
-          $style .= $item;
+          $stylesheet .= $item;
       }
       $i->delete();
      }
 
     # Recurse down tree
     if (defined $i->content) {
-      $style .= $self->_get_style({tree_content => $i->content});
+      $stylesheet .= $self->_parse_stylesheet({tree_content => $i->content});
     }
   }
 
-  return $style;
+  return $stylesheet;
+}
+
+sub _get_tree {
+  my ($self,$params) = @_;
+
+  return $self->{html_tree};
+}
+
+sub _get_css {
+  my ($self,$params) = @_;
+
+  return $self->{css};
+}
+
+sub _set_html {
+  my ($self,$params) = @_;
+
+  $self->{html} = $$params{html};
+
+  return $self->{html};
+}
+
+sub _set_stylesheet {
+  my ($self,$params) = @_;
+
+  $self->{stylesheet} = $$params{stylesheet};
+
+  return $self->{stylesheet};
 }
 
 sub _expand {
   my ($self, $params) = @_;
 
-  my $style = $$params{style};
+  my $properties = $$params{properties};
   my $inline = '';
-  foreach my $key (keys %{$style}) {
-    $inline .= $key . ':' . $$style{$key} . ';';
+  foreach my $key (keys %{$properties}) {
+    $inline .= $key . ':' . $$properties{$key} . ';';
   }
 
   return $inline;
