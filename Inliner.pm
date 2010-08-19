@@ -197,7 +197,7 @@ sub inlinify {
 
     #at this point we have a document that contains the expanded inlined stylesheet
     #BUT we need to collapse the properties to remove duplicate overridden styles
-
+    $self->_collapse_inline_styles({content => $self->_get_tree()->content() });
 
     # The entities list is the do-not-encode string from HTML::Entities
     # with the single quote added.
@@ -249,6 +249,39 @@ sub _parse_stylesheet {
   }
 
   return $stylesheet;
+}
+
+
+sub _collapse_inline_styles {
+  my ($self,$params) = @_;
+
+  my $content = $$params{content};
+
+  foreach my $i (@{$content}) {
+
+    next unless ref $i eq 'HTML::Element';
+
+    if ($i->attr('style')) {
+      my $styles = {}; # hold the property value pairs
+      foreach my $pv_pair (split /;/,  $i->attr('style')) {
+        my ($key,$value) = split /:/, $pv_pair;
+        $$styles{$key} = $value;
+      }
+
+      my $collapsed_style = '';
+      foreach my $key (sort keys %{$styles}) { #sort for predictable output
+        $collapsed_style .= $key . ': ' . $$styles{$key} . '; ';
+      }
+
+      $collapsed_style =~ s/\s*$//;
+      $i->attr('style', $collapsed_style); 
+    }
+
+    # Recurse down tree
+    if (defined $i->content) {
+      $self->_collapse_inline_styles({content => $i->content});
+    }
+  }
 }
 
 sub _get_tree {
