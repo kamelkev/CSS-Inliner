@@ -31,7 +31,7 @@
         * Update the regex for skipping over non-inlineable psuedo attributes
         * In addition to skipping psuedo attributes, skip over @, like @import
 
-2666	2010-08-19	Kevin Kamel <kamelkev@mailermailer.com>
+2667	2010-08-19	Kevin Kamel <kamelkev@mailermailer.com>
 
 	* Include a number of contributions from Michael Peters <mpeters@plusthree.com>
           - do not die if there is no style container within passed document

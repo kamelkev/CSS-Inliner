@@ -57,6 +57,7 @@ B<html_tree> (optional). Pass in a custom instance of HTML::Treebuilder
 B<strip_attrs> (optional). Remove all "id" and "class" attributes during inlining
 
 =back
+=cut
 
 sub new {
   my ($proto, $params) = @_;
