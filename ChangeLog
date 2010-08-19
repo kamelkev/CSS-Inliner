@@ -30,3 +30,16 @@
 
         * Update the regex for skipping over non-inlineable psuedo attributes
         * In addition to skipping psuedo attributes, skip over @, like @import
+
+2667	2010-08-19	Kevin Kamel <kamelkev@mailermailer.com>
+
+	* Include a number of contributions from Michael Peters <mpeters@plusthree.com>
+          - do not die if there is no style container within passed document
+          - do not die if comments are encountered within <style> blocks
+          - contribution of tests to ensure described functionality matches up
+          - respect order of CSS rules for better style cascade
+        * Added option to selectively strip out class and id attributes via constructor param
+        * Added automatic collapsing of overridden attributes, assisted by Vivek Khera <vivek@khera.org>
+        * Restructured parts of code and added some get methods to ease future testing
+        * Adjusted some variable names to be more correct
+
