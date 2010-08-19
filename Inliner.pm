@@ -362,7 +362,7 @@ Michael Peters <C<wonko@cpan.org>>
 
 =head1 LICENSE
 
-This module is Copyright 2009 Khera Communications, Inc.  It is
+This module is Copyright 2010 Khera Communications, Inc.  It is
 licensed under the same terms as Perl itself.
 
 =cut
