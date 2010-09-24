@@ -5,11 +5,14 @@ WriteMakefile(
     PREREQ_PM => {
 	'HTML::TreeBuilder' => 0,
         'CSS::Tiny' => 0,
-        'HTML::Query' => 0,
+        'HTML::Query' => 0.03,
         'Test::More' => 0
     },
     dist => {
 	PREOP => 'pod2text Inliner.pm > README',
+    },
+    'test' => {
+	TESTS => join(' ', map { glob } qw( t/*.t )),
     },
     VERSION_FROM => 'Inliner.pm',
     AUTHOR => 'Kevin Kamel <kamelkev@mailermailer.com>',

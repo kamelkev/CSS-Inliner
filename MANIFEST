@@ -3,3 +3,8 @@ Inliner.pm
 MANIFEST
 Makefile.PL
 README
+t/advanced.t
+t/advanced_strip.t
+t/basic.t
+t/custom_html_tree.t
+t/ordering.t
