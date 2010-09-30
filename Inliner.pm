@@ -222,6 +222,78 @@ sub inlinify {
   return $html;
 }
 
+###########################################################################################################
+# from CSS spec at http://www.w3.org/TR/CSS21/cascade.html#specificity
+###########################################################################################################
+# A selector's specificity is calculated as follows:
+#
+#     * count the number of ID attributes in the selector (= a)
+#     * count the number of other attributes and pseudo-classes in the selector (= b)
+#     * count the number of element names in the selector (= c)
+#     * ignore pseudo-elements.
+#
+# Concatenating the three numbers a-b-c (in a number system with a large base) gives the specificity.
+#
+# Example(s):
+#
+# Some examples:
+#
+# *             {}  /* a=0 b=0 c=0 -> specificity =   0 */
+# LI            {}  /* a=0 b=0 c=1 -> specificity =   1 */
+# UL LI         {}  /* a=0 b=0 c=2 -> specificity =   2 */
+# UL OL+LI      {}  /* a=0 b=0 c=3 -> specificity =   3 */
+# H1 + *[REL=up]{}  /* a=0 b=1 c=1 -> specificity =  11 */
+# UL OL LI.red  {}  /* a=0 b=1 c=3 -> specificity =  13 */
+# LI.red.level  {}  /* a=0 b=2 c=1 -> specificity =  21 */
+# #x34y         {}  /* a=1 b=0 c=0 -> specificity = 100 */
+###########################################################################################################
+
+=pod
+
+=item specificity()
+
+Calculate the specificity for any given passed selector, a critical factor in determining how best to apply the cascade
+
+A selector's specificity is calculated as follows:
+
+     * count the number of ID attributes in the selector (= a)
+     * count the number of other attributes and pseudo-classes in the selector (= b)
+     * count the number of element names in the selector (= c)
+     * ignore pseudo-elements.
+
+The specificity is based only on the form of the selector. In particular, a selector of the form "[id=p33]" is counted 
+as an attribute selector (a=0, b=0, c=1, d=0), even if the id attribute is defined as an "ID" in the source document's DTD. 
+
+See the following spec for additional details:
+L<http://www.w3.org/TR/CSS21/cascade.html#specificity>
+
+=back
+
+=cut
+
+sub specificity {
+  my ($self,$params) = @_;
+
+  my $specificity = 0;
+  my $rule => $$params{rule};
+
+  # 1 point for each part of the rule
+  my @matches = ($rule =~ /\S+/g);
+  $specificity += 1 * scalar @matches;
+
+  # 10 points for each class or attribute selector
+  @matches = ($rule =~ /\./g);
+  $specificity += 10 * scalar @matches;
+  @matches = ($rule =~ /\[[^]]+\]/g);
+  $specificity += 10 * scalar @matches;
+
+  # 100 points for each id selector
+  @matches = ($rule =~ /#\S+/g);
+  $specificity += 100 * scalar @matches;
+
+  return $specificity;
+}
+
 ####################################################################
 #                                                                  #
 # The following are all private methods and are not for normal use #
