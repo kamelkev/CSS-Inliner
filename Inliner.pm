@@ -180,6 +180,9 @@ sub inlinify {
     #parse and store the stylesheet as a hash object
     $self->_get_css()->read_string($self->{stylesheet});
 
+    my %matched_elements;
+    my $count = 0;
+
     foreach my $key (keys %{$self->_get_css()}) {
 
       #skip over psuedo selectors, they are not mappable the same
@@ -190,17 +193,44 @@ sub inlinify {
 
       my $elements = $self->_get_tree()->query($key);
 
-      #if an element matched a style within the document, convert it to inline
+      # CSS rules cascade based on the specificity and order
+      my $specificity = $self->specificity({rule => $key});
+
+      #if an element matched a style within the document store the rule, the specificity
+      #and the actually CSS attributes so we can inline it later
       foreach my $element (@{$elements}) {
-        my $inline = $self->_expand({properties => $self->_get_css()->{$key}});
-
-        my $cur_style = '';
-        if (defined($element->attr('style'))) {
-          $cur_style = $element->attr('style');
-        }
-
-        $element->attr('style',$cur_style . $inline);
+        $matched_elements{$element->address()} ||= [];
+        my %match_info = (
+            rule     => $key,
+            element  => $element,
+            specificity   => $specificity,
+            position => $count,
+            css      => $self->_get_css()->{$key},
+        );
+        push(@{$matched_elements{$element->address()}}, \%match_info);
+        $count++;
       }
+    }
+
+    #process all elements
+    foreach my $matches (values %matched_elements) {
+      my $element = $matches->[0]->{element};
+      # rules are sorted by specificity, and if there's a tie the position is used
+      # we sort with the lightest items first so that heavier items can override later
+      my @sorted_matches = sort { $a->{specificity} <=> $b->{specificity} || $a->{position} <=> $b->{position} } @$matches;
+
+      my %new_style;
+      foreach my $match (@sorted_matches) {
+        %new_style = (%new_style, %{$match->{css}});
+      }
+    
+      # styles already inlined have greater precedence
+      if (defined($element->attr('style'))) {
+        my %cur_style = $self->_split({style => $element->attr('style')});
+        %new_style = (%new_style, %cur_style);
+      }
+
+      $element->attr('style', $self->_expand({properties => \%new_style}));
     }
 
     #at this point we have a document that contains the expanded inlined stylesheet
@@ -275,7 +305,7 @@ sub specificity {
   my ($self,$params) = @_;
 
   my $specificity = 0;
-  my $rule => $$params{rule};
+  my $rule = $$params{rule};
 
   # 1 point for each part of the rule
   my @matches = ($rule =~ /\S+/g);
@@ -414,6 +444,21 @@ sub _expand {
   }
 
   return $inline;
+}
+
+sub _split {
+    my ($self, $params) = @_;
+    my $style = $params->{style};
+    my %split;
+
+    # Split into properties
+    foreach ( grep { /\S/ } split /\;/, $style ) {
+        unless ( /^\s*([\w._-]+)\s*:\s*(.*?)\s*$/ ) {
+            croak "Invalid or unexpected property '$_' in style '$style'";
+        }
+        $split{lc $1} = $2;
+    }
+    return %split;
 }
 
 1;
