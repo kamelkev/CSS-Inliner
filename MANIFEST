@@ -1,10 +1,14 @@
 ChangeLog
-Inliner.pm
+lib/CSS/Inliner.pm
 MANIFEST
 Makefile.PL
 README
+t/acidtest.t
 t/advanced.t
 t/advanced_strip.t
 t/basic.t
+t/cascade.t
 t/custom_html_tree.t
 t/ordering.t
+t/specificity.t
+t/html/acidtest.html
