@@ -374,7 +374,7 @@ sub _collapse_inline_styles {
     if ($i->attr('style')) {
       my $styles = {}; # hold the property value pairs
       foreach my $pv_pair (split /;/,  $i->attr('style')) {
-        my ($key,$value) = split /:/, $pv_pair;
+        my ($key,$value) = split /:/, $pv_pair, 2;
         $$styles{$key} = $value;
       }
 

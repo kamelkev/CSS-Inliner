@@ -1,7 +1,12 @@
-use Test::More;
-plan(tests => 8);
+use strict;
+use warnings;
+use lib qw( ./lib ../lib );
 
-use_ok('CSS::Inliner');
+use Test::More;
+use Cwd;
+use CSS::Inliner;
+
+plan(tests => 7);
 
 my $html = <<END;
 <html>
@@ -25,7 +30,7 @@ END
 
 my $inliner = CSS::Inliner->new();
 $inliner->read({html => $html});
-$inliner->_get_css();
+my $css = $inliner->_get_css();
 
 #shuffle stored styles around
 my $shuffle1 = 0;

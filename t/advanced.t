@@ -1,5 +1,11 @@
+use strict;
+use warnings;
+use lib qw( ./lib ../lib );
+
 use Test::More;
+use Cwd;
 use CSS::Inliner;
+
 plan(tests => 8);
 
 my $html = <<'END';

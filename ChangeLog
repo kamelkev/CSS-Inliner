@@ -43,3 +43,7 @@
         * Restructured parts of code and added some get methods to ease future testing
         * Adjusted some variable names to be more correct
 
+****	*********	Kevin Kamel <kamelkev@mailermailer.com>
+        * Include contribution from David xyz <david@ytfc.com>
+	  - allow for proper parsing of background urls, previously broken
+	  - include test for validating fix

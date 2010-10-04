@@ -1,4 +1,11 @@
+use strict;
+use warnings;
+use lib qw( ./lib ../lib );
+
 use Test::More;
+use Cwd;
+use CSS::Inliner;
+
 plan(tests => 5);
 
 use_ok('CSS::Inliner');

@@ -1,17 +1,25 @@
+use strict;
+use warnings;
+use lib qw( ./lib ../lib );
+
 use Test::More;
-plan(tests => 10);
+use Cwd;
+use CSS::Inliner;
 
-use_ok('CSS::Inliner');
-#require_ok('./html/acidtest.html');
+plan(tests => 1);
 
-#need better way of opening this
-open( my $fh, 't/html/acidtest.html' ) or die "can't open!\n";
+my $html_path = (getcwd =~ m/t/) ? getcwd . '/html/' : getcwd . '/t/html/';
+my $test_file = $html_path . 'acidtest.html';
+my $result_file = $html_path . 'acidtest_result.html';
+
+open( my $fh, $test_file ) or die "can't open!\n";
 my $html = do { local( $/ ) ; <$fh> } ;
+
+open( my $fh, $result_file ) or die "can't open!\n";
+my $correct_result = do { local( $/ ) ; <$fh> } ;
 
 my $inliner = CSS::Inliner->new();
 $inliner->read({html => $html});
 my $inlined = $inliner->inlinify();
 
-warn $inlined;
-
-#test isn't done yet.......
+ok($inlined eq $correct_result, 'result was correct');

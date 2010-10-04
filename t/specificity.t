@@ -1,7 +1,12 @@
-use Test::More;
-plan(tests => 15);
+use strict;
+use warnings;
+use lib qw( ./lib ../lib );
 
+use Test::More;
+use Cwd;
 use CSS::Inliner;
+
+plan(tests => 15);
 
 my %rules = (
     "li"                    => 1,

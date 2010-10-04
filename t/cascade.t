@@ -1,5 +1,11 @@
+use strict;
+use warnings;
+use lib qw( ./lib ../lib );
+
 use Test::More;
+use Cwd;
 use CSS::Inliner;
+
 plan(tests => 21);
 
 # moderately complicated rules with elements and classes
@@ -91,6 +97,9 @@ $inliner->read({html => $html});
 $inlined = $inliner->inlinify();
 
 ok($inlined =~ m/<h1 class="alert cool" id="title" style="color: red; font-size: 25px; font-weight: normal;">Lorem ipsum/, 'cascading rules for h1.alert.cool inlined');
+
+warn $inlined;
+
 ok($inlined =~ m/<h1 class="cool" style="color: blue; font-size: 20px;">Consectetur/, 'h1.cool rule inlined');
 ok($inlined =~ m/<p class="intro" style="color: #555555; font-size: 10px; font-weight: normal;">Aliquam/, '.intro rule inlined');
 ok($inlined =~ m/<p style="color: #123123; font-size: 8px; font-weight: normal;">Phasellus/, 'div p rule inlined');

@@ -1,6 +1,12 @@
+use strict;
+use warnings;
+use lib qw( ./lib ../lib );
+
 use Test::More;
-use HTML::TreeBuilder;
+use Cwd;
 use CSS::Inliner;
+use HTML::TreeBuilder;
+
 plan(tests => 6);
 
 my $html = <<END;
