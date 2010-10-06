@@ -13,7 +13,7 @@ my $html = <<'END';
 <html>
   <head>
     <title>Moderate Document</title>
-    <style type="text/javascript">
+    <style type="text/css">
     h1 { font-size: 20px }
     h1.alert { color: red }
     h1.cool { color: blue }
@@ -59,19 +59,20 @@ $html = <<'END';
 <html>
   <head>
     <title>Complicated Document</title>
-    <style type="text/javascript">
-    h1 { font-size: 20px }
-    #title { font-size: 25px }
-    h1.cool { color: blue }
-    h1.alert { color: red }
-    h1.cool.alert { font-size: 30px; font-weight: normal }
+    <style type="text/css">
+    h1 { font-size: 20px; }
+    #title { font-size: 25px; }
+    h1.cool { color: blue; }
+    h1.alert { color: red; }
+    h1.cool.alert { font-size: 30px; font-weight: 800; }
+    h1.alert.cool { font-size: 30px; font-weight: 900; }
     .intro { color: #555555; font-size: 10px; }
-    div p { color: #123123; font-size: 8px }
-    p { font-weight: normal; font-size: 9px }
-    p:hover { color: yellow }
-    p.poor { font-weight: lighter; color: black }
-    p.rich { font-weight: bold; color: black }
-    div[align=right] p { color: gray }
+    div p { color: #123123; font-size: 8px; }
+    p { font-weight: 200; font-size: 9px; }
+    p:hover { color: yellow; }
+    p.poor { font-weight: 300; color: black; }
+    p.rich { font-weight: 400; color: black; }
+    div[align=right] p { color: gray; }
     </style>
   </head>
   <body>
@@ -96,18 +97,15 @@ $inliner = CSS::Inliner->new();
 $inliner->read({html => $html});
 $inlined = $inliner->inlinify();
 
-ok($inlined =~ m/<h1 class="alert cool" id="title" style="color: red; font-size: 25px; font-weight: normal;">Lorem ipsum/, 'cascading rules for h1.alert.cool inlined');
-
-warn $inlined;
-
+ok($inlined =~ m/<h1 class="alert cool" id="title" style="color: red; font-size: 25px; font-weight: 900;">Lorem ipsum/, 'cascading rules for h1.alert.cool inlined');
 ok($inlined =~ m/<h1 class="cool" style="color: blue; font-size: 20px;">Consectetur/, 'h1.cool rule inlined');
-ok($inlined =~ m/<p class="intro" style="color: #555555; font-size: 10px; font-weight: normal;">Aliquam/, '.intro rule inlined');
-ok($inlined =~ m/<p style="color: #123123; font-size: 8px; font-weight: normal;">Phasellus/, 'div p rule inlined');
-ok($inlined =~ m/<p style="color: #123123; font-size: 8px; font-weight: normal;">Nunc augue/, 'div p rule inlined again');
-ok($inlined =~ m/<p style="font-size: 9px; font-weight: normal;">Nulla/, 'just the "p" rule');
-ok($inlined =~ m/<p style="color: gray; font-size: 8px; font-weight: normal;">Vivamus/, '"div[align=right] p" + "div p" + "p"');
-ok($inlined =~ m/<p class="rich" style="color: gray; font-size: 8px; font-weight: bold;">Dictum/, '"div[align=right] p" + "div p" + "p" + "p.rich"');
-ok($inlined =~ m/<p class="poor rich" style="color: black; font-size: 9px; font-weight: bold;">Luctus/, 'rich before the poor');
+ok($inlined =~ m/<p class="intro" style="color: #555555; font-size: 10px; font-weight: 200;">Aliquam/, '.intro rule inlined');
+ok($inlined =~ m/<p style="font-size: 9px; font-weight: 200;">Nulla/, 'just the "p" rule');
+ok($inlined =~ m/<p style="color: #123123; font-size: 8px; font-weight: 200;">Phasellus/, 'div p rule inlined');
+ok($inlined =~ m/<p style="color: #123123; font-size: 8px; font-weight: 200;">Nunc augue/, 'div p rule inlined again');
+ok($inlined =~ m/<p style="color: gray; font-size: 8px; font-weight: 200;">Vivamus/, '"div[align=right] p" + "div p" + "p"');
+ok($inlined =~ m/<p class="rich" style="color: gray; font-size: 8px; font-weight: 400;">Dictum/, '"div[align=right] p" + "div p" + "p" + "p.rich"');
+ok($inlined =~ m/<p class="poor rich" style="color: black; font-size: 9px; font-weight: 400;">Luctus/, 'rich before the poor');
 ok($inlined !~ m/<style/, 'no style blocks left');
 ok($inlined !~ m/yellow/, ':hover pseudo-attribute was ignored');
 ok($inlined !~ m/30px/, 'h1.cool.alert font-size ignored');
