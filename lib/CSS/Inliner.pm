@@ -16,9 +16,8 @@ $VERSION = sprintf "%d", q$Revision$ =~ /(\d+)/;
 use Carp;
 
 use HTML::TreeBuilder;
-use CSS::Tiny;
+use CSS::Simple;
 use HTML::Query 'query';
-use Tie::IxHash;
 
 =pod
 
@@ -28,13 +27,13 @@ CSS::Inliner - Library for converting CSS <style> blocks to inline styles.
 
 =head1 SYNOPSIS
 
- use Inliner;
+use Inliner;
 
- my $inliner = new Inliner();
+my $inliner = new Inliner();
 
- $inliner->read_file({filename => 'myfile.html'});
+$inliner->read_file({filename => 'myfile.html'});
 
- print $inliner->inlinify();
+print $inliner->inlinify();
 
 =head1 DESCRIPTION
 
@@ -65,14 +64,12 @@ sub new {
   my $class = ref($proto) || $proto;
 
   my $self = {
-              stylesheet => undef,
-              css => CSS::Tiny->new(),
-              html => undef,
-              html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
-              strip_attrs => defined($$params{strip_attrs}) ? 1 : 0,
-             };
-
-  tie %{$self->{css}}, 'Tie::IxHash'; # configure tiny to preserve order of rules
+    stylesheet => undef,
+    css => CSS::Simple->new(),
+    html => undef,
+    html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
+    strip_attrs => defined($$params{strip_attrs}) ? 1 : 0,
+  };
 
   bless $self, $class;
   return $self;
@@ -178,12 +175,13 @@ sub inlinify {
   my $html;
   if (defined $self->_get_css()) {
     #parse and store the stylesheet as a hash object
-    $self->_get_css()->read_string($self->{stylesheet});
+
+    $self->_get_css()->read({css => $self->{stylesheet}});
 
     my %matched_elements;
     my $count = 0;
 
-    foreach my $key (keys %{$self->_get_css()}) {
+    foreach my $key ($self->_get_css()->get_selectors()) {
 
       #skip over psuedo selectors, they are not mappable the same
       next if $key =~ /\w:(?:active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter)\b/io;
@@ -201,56 +199,57 @@ sub inlinify {
       foreach my $element (@{$elements}) {
         $matched_elements{$element->address()} ||= [];
         my %match_info = (
-            rule     => $key,
-            element  => $element,
-            specificity   => $specificity,
-            position => $count,
-            css      => $self->_get_css()->{$key},
-        );
-        push(@{$matched_elements{$element->address()}}, \%match_info);
-        $count++;
+          rule     => $key,
+          element  => $element,
+          specificity   => $specificity,
+          position => $count,
+          css      => $self->_get_css()->get_properties({selector => $key}),
+          );
+  
+          push(@{$matched_elements{$element->address()}}, \%match_info);
+          $count++;
+        }
       }
+
+      #process all elements
+      foreach my $matches (values %matched_elements) {
+        my $element = $matches->[0]->{element};
+        # rules are sorted by specificity, and if there's a tie the position is used
+        # we sort with the lightest items first so that heavier items can override later
+        my @sorted_matches = sort { $a->{specificity} <=> $b->{specificity} || $a->{position} <=> $b->{position} } @$matches;
+
+        my %new_style;
+        foreach my $match (@sorted_matches) {
+          %new_style = (%new_style, %{$match->{css}});
+        }
+
+        # styles already inlined have greater precedence
+        if (defined($element->attr('style'))) {
+          my %cur_style = $self->_split({style => $element->attr('style')});
+          %new_style = (%new_style, %cur_style);
+        }
+
+        $element->attr('style', $self->_expand({properties => \%new_style}));
+      }
+
+      #at this point we have a document that contains the expanded inlined stylesheet
+      #BUT we need to collapse the properties to remove duplicate overridden styles
+      $self->_collapse_inline_styles({content => $self->_get_tree()->content() });
+
+      # The entities list is the do-not-encode string from HTML::Entities
+      # with the single quote added.
+
+      # 3rd argument overrides the optional end tag, which for HTML::Element
+      # is just p, li, dt, dd - tags we want terminated for our purposes
+
+      $html = $self->_get_tree()->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+    }
+    else {
+      $html = $self->{html};
     }
 
-    #process all elements
-    foreach my $matches (values %matched_elements) {
-      my $element = $matches->[0]->{element};
-      # rules are sorted by specificity, and if there's a tie the position is used
-      # we sort with the lightest items first so that heavier items can override later
-      my @sorted_matches = sort { $a->{specificity} <=> $b->{specificity} || $a->{position} <=> $b->{position} } @$matches;
-
-      my %new_style;
-      foreach my $match (@sorted_matches) {
-        %new_style = (%new_style, %{$match->{css}});
-      }
-    
-      # styles already inlined have greater precedence
-      if (defined($element->attr('style'))) {
-        my %cur_style = $self->_split({style => $element->attr('style')});
-        %new_style = (%new_style, %cur_style);
-      }
-
-      $element->attr('style', $self->_expand({properties => \%new_style}));
-    }
-
-    #at this point we have a document that contains the expanded inlined stylesheet
-    #BUT we need to collapse the properties to remove duplicate overridden styles
-    $self->_collapse_inline_styles({content => $self->_get_tree()->content() });
-
-    # The entities list is the do-not-encode string from HTML::Entities
-    # with the single quote added.
-
-    # 3rd argument overrides the optional end tag, which for HTML::Element
-    # is just p, li, dt, dd - tags we want terminated for our purposes
-
-    $html = $self->_get_tree()->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+    return $html;
   }
-  else {
-    $html = $self->{html};
-  }
-
-  return $html;
-}
 
 ###########################################################################################################
 # from CSS spec at http://www.w3.org/TR/CSS21/cascade.html#specificity
@@ -286,10 +285,10 @@ Calculate the specificity for any given passed selector, a critical factor in de
 
 A selector's specificity is calculated as follows:
 
-     * count the number of ID attributes in the selector (= a)
-     * count the number of other attributes and pseudo-classes in the selector (= b)
-     * count the number of element names in the selector (= c)
-     * ignore pseudo-elements.
+* count the number of ID attributes in the selector (= a)
+* count the number of other attributes and pseudo-classes in the selector (= b)
+* count the number of element names in the selector (= c)
+* ignore pseudo-elements.
 
 The specificity is based only on the form of the selector. In particular, a selector of the form "[id=p33]" is counted 
 as an attribute selector (a=0, b=0, c=1, d=0), even if the id attribute is defined as an "ID" in the source document's DTD. 
@@ -301,27 +300,73 @@ L<http://www.w3.org/TR/CSS21/cascade.html#specificity>
 
 =cut
 
+
+#this method is a rip of the parser from HTML::Query, adjusted to count
 sub specificity {
   my ($self,$params) = @_;
 
-  my $specificity = 0;
-  my $rule = $$params{rule};
+  my $selectivity = 0;
+  my $comops = 0;
+  my $query = $$params{rule};
 
-  # 1 point for each part of the rule
-  my @matches = ($rule =~ /\S+/g);
-  $specificity += 1 * scalar @matches;
+  while (1) {
+    my $pos = pos($query) || 0;
+    my $relationship = '';
+    my $leading_whitespace;
 
-  # 10 points for each class or attribute selector
-  @matches = ($rule =~ /\./g);
-  $specificity += 10 * scalar @matches;
-  @matches = ($rule =~ /\[[^]]+\]/g);
-  $specificity += 10 * scalar @matches;
+    # ignore any leading whitespace
+    if ($query =~ / \G (\s+) /cgsx) {
+      $leading_whitespace = defined($1) ? 1 : 0;
+    }
 
-  # 100 points for each id selector
-  @matches = ($rule =~ /#\S+/g);
-  $specificity += 100 * scalar @matches;
+    # grandchild selector is whitespace sensitive, requires leading whitespace
+    if ($leading_whitespace && $comops && ($query =~ / \G (\*) \s+ /cgx)) {
+      #have to eat this character so regex can continue
+    }
 
-  return $specificity;
+    # get other relationship modifiers
+    if ($query =~ / \G (>|\+) \s* /cgx) {
+      #have to eat this character so regex can continue
+    }
+
+    # optional leading word is a tag name
+    if ($query =~ / \G(?!\*(?:\s+|$|\[))([\w*]+) /cgx) {
+      $selectivity += 1;
+    }
+
+    if (($leading_whitespace || $comops == 0) && ($query =~ / \G (\*) /cgx)) {
+      #eat the universal selector here
+    }
+
+    # loop to properly calculate specificity for term
+    while (1) {
+      my $inner = pos($query);
+      
+      # that can be followed by (or the query can start with) a #id
+      if ($query =~ / \G \# ([\w\-]+) /cgx) {
+        $selectivity += 100;
+      }
+
+      # and/or a .class
+      if ($query =~ / \G \. ([\w\-]+) /cgx) {
+        $selectivity += 10;
+      }
+
+      # and/or none or more [ ] attribute specs
+      if ($query =~ / \G \[ (.*?) \] /cgx) {
+        $selectivity += 10;
+      }
+      
+      last if (defined($inner) && ($inner == pos($query)));
+    }
+
+    # so we can check we've done something
+    $comops++;
+    
+    last if ($pos == pos($query));
+  }
+
+  return $selectivity;
 }
 
 ####################################################################
@@ -343,14 +388,14 @@ sub _parse_stylesheet {
     if (($i->tag eq 'style') && (!$i->attr('media') || $i->attr('media') =~ m/\b(all|screen)\b/)) {
 
       foreach my $item ($i->content_list()) {
-          # remove HTML comment markers
-          $item =~ s/<!--//mg;
-          $item =~ s/-->//mg;
+        # remove HTML comment markers
+        $item =~ s/<!--//mg;
+        $item =~ s/-->//mg;
 
-          $stylesheet .= $item;
+        $stylesheet .= $item;
       }
       $i->delete();
-     }
+    }
 
     # Recurse down tree
     if (defined $i->content) {
@@ -447,18 +492,18 @@ sub _expand {
 }
 
 sub _split {
-    my ($self, $params) = @_;
-    my $style = $params->{style};
-    my %split;
+  my ($self, $params) = @_;
+  my $style = $params->{style};
+  my %split;
 
-    # Split into properties
-    foreach ( grep { /\S/ } split /\;/, $style ) {
-        unless ( /^\s*([\w._-]+)\s*:\s*(.*?)\s*$/ ) {
-            croak "Invalid or unexpected property '$_' in style '$style'";
-        }
-        $split{lc $1} = $2;
+  # Split into properties
+  foreach ( grep { /\S/ } split /\;/, $style ) {
+    unless ( /^\s*([\w._-]+)\s*:\s*(.*?)\s*$/ ) {
+      croak "Invalid or unexpected property '$_' in style '$style'";
     }
-    return %split;
+    $split{lc $1} = $2;
+  }
+  return %split;
 }
 
 1;
