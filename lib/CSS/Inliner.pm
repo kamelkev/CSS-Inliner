@@ -515,7 +515,7 @@ sub _expand_stylesheet {
   foreach my $i (@{$$params{tree_content}}) {
     next unless ref $i eq 'HTML::Element';
 
-    if (($i->tag eq 'link') && (($i->attr('rel') eq 'stylesheet') || ($i->attr('type') eq 'text/css'))) {
+    if (($i->tag eq 'link') && (((defined $i->attr('rel')) && ($i->attr('rel') eq 'stylesheet')) || (((defined $i->attr('type')) && $i->attr('type') eq 'text/css')))) {
       $stylesheets++;
     }
 
@@ -530,7 +530,7 @@ sub _expand_stylesheet {
     }
 
     #now that we know we are ok to fetch...
-    if (($i->tag eq 'link') && (($i->attr('rel') eq 'stylesheet') || ($i->attr('type') eq 'text/css'))) {
+    if (($i->tag eq 'link') && (((defined $i->attr('rel')) && ($i->attr('rel') eq 'stylesheet')) || (((defined $i->attr('type')) && $i->attr('type') eq 'text/css')))) {
 
       my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
 
