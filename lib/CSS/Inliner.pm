@@ -18,6 +18,8 @@ use Carp;
 use HTML::TreeBuilder;
 use CSS::Simple;
 use HTML::Query 'query';
+use LWP::UserAgent;
+use URI;
 
 =pod
 
@@ -81,7 +83,38 @@ sub new {
 
 =pod
 
-=over 4
+=over 5
+
+=item fetch_file( params )
+
+Fetches a remote HTML file that supposedly contains both HTML and a
+style declaration. It subsequently calls the read() method
+automatically.
+
+This method expands all relative urls, as well as fully expands the 
+stylesheet reference within the document.
+
+This method requires you to pass in a params hash that contains a
+url argument for the requested document. For example:
+
+$self->fetch_file({ url => 'http://www.example.com' });
+
+=cut
+
+sub fetch_file {
+  my ($self,$params) = @_;
+
+  unless ($params && $$params{url}) {
+    croak "You must pass in hash params that contain a url argument";
+  }
+
+  #fetch a absolutized version of the html
+  my $html = $self->_fetch_html({ url => $$params{url}});
+
+  $self->read({html => $html});
+
+  return();
+}
 
 =item read_file( params )
 
@@ -376,6 +409,158 @@ sub specificity {
 #                                                                  #
 ####################################################################
 
+sub _fetch_url {
+  my ($self,$params) = @_;
+
+  # Create a user agent object
+  my $ua = LWP::UserAgent->new;
+  $ua->agent("CSS::Inliner" . $ua->agent);
+  $ua->protocols_allowed( ['http','https'] );
+
+  # Create a request     
+  my $uri = URI->new($$params{url});
+
+  my $req = HTTP::Request->new('GET',$uri);
+
+  # Pass request to the user agent and get a response back
+  my $res = $ua->request($req);
+
+  # if not successful
+  if (!$res->is_success()) {
+    die 'There was an error in fetching the document for '.$uri.' : '.$res->message;
+  }
+
+  # Is it a HTML document
+  if ($res->content_type ne 'text/html' && $res->content_type ne 'text/css') {
+    die 'The web site address you entered is not an HTML document.';
+  }
+
+  # remove the <HTML> tag pair as parser will add it again.
+  my $content = $res->content || ''; 
+  $content =~ s|</?html>||gi;
+
+  # Expand all URLs to absolute ones
+  my $baseref = $res->base;
+
+  return ($content,$baseref);
+}
+
+sub _fetch_html {
+  my ($self,$params) = @_;
+
+  my ($content,$baseref) = $self->_fetch_url({ url => $$params{url} });
+
+  # Build the HTML tree
+  my $doc = HTML::TreeBuilder->new();
+  $doc->parse($content);
+  $doc->eof;
+
+  # Change relative links to absolute links
+  $self->_changelink_relative({ content => $doc->content, baseref => $baseref});
+
+  $self->_expand_stylesheet({ tree_content => $doc->content });
+
+  return $doc->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+}
+
+sub _changelink_relative {
+  my ($self,$params) = @_;
+
+  my $base = $$params{baseref};
+  
+  foreach my $i (@{$$params{content}}) {
+  
+    next unless ref $i eq 'HTML::Element';
+  
+    if ($i->tag eq 'img' or $i->tag eq 'frame' or $i->tag eq 'input' or $i->tag eq 'script') {
+  
+      if ($i->attr('src') and $base) {
+        # Construct a uri object for the attribute 'src' value
+        my $uri = URI->new($i->attr('src'));
+        $i->attr('src',$uri->abs($base));
+      }                         # end 'src' attribute
+    }
+    elsif ($i->tag eq 'form' and $base) {
+      # Construct a new uri for the 'action' attribute value
+      my $uri = URI->new($i->attr('action'));
+      $i->attr('action', $uri->abs($base));
+    }
+    elsif (($i->tag eq 'a' or $i->tag eq 'area' or $i->tag eq 'link') and $i->attr('href') and $i->attr('href') !~ /^\#/) {
+      # Construct a new uri for the 'href' attribute value
+      my $uri = URI->new($i->attr('href'));
+
+      # Expand URLs to absolute ones if base uri is defined.
+      my $newuri = $base ? $uri->abs($base) : $uri;
+
+      $i->attr('href', $newuri->as_string());
+    }
+    elsif ($i->tag eq 'td' and $i->attr('background') and $base) {
+      # adjust 'td' background
+      my $uri = URI->new($i->attr('background'));
+      $i->attr('background',$uri->abs($base));
+    }                           # end tag choices
+
+    # Recurse down tree
+    if (defined $i->content) {
+      $self->_changelink_relative({ content => $i->content, baseref => $base });
+    }
+  }
+}
+
+sub _expand_stylesheet {
+  my ($self,$params) = @_;
+
+  my $stylesheets = 0; #we only allow for one declaration right now...
+
+  foreach my $i (@{$$params{tree_content}}) {
+    next unless ref $i eq 'HTML::Element';
+
+    if (($i->tag eq 'link') && (($i->attr('rel') eq 'stylesheet') || ($i->attr('type') eq 'text/css'))) {
+      $stylesheets++;
+    }
+
+    #process this node if the html media type is screen, all or undefined (which defaults to screen)
+    if (($i->tag eq 'style') && (!$i->attr('media') || $i->attr('media') =~ m/\b(all|screen)\b/)) {
+      $stylesheets++;
+    }
+
+    #stop doing work right now, we won't be able to process successfully
+    if ($stylesheets > 1) {
+      die 'CSS::Inliner can only process one set of styles within a document';
+    }
+
+    #now that we know we are ok to fetch...
+    if (($i->tag eq 'link') && (($i->attr('rel') eq 'stylesheet') || ($i->attr('type') eq 'text/css'))) {
+
+      my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
+
+      #remove the trailing part of the baseref to create the point at which the relative urls below get attached
+      $baseref =~ s/[^\/]*?$//;
+
+      #absolutized the assetts within the stylesheet that are relative 
+      $content =~ s/(url\()
+                  ["']?
+                  ((?:(?!https?:\/\/)(?!\))
+                 [^"'])*)
+                  ["']?
+            (?=\))
+           /$1\'$baseref$2\'/xsgi;
+
+      my $stylesheet = HTML::Element->new('style');
+      $stylesheet->push_content($content);
+
+      $i->replace_with($stylesheet);
+    }
+
+    # Recurse down tree only if we found a head block
+    if (($i->tag eq 'head') && (defined $i->content)) {
+      $self->_expand_stylesheet({tree_content => $i->content});
+    }
+  }
+
+  return();
+}
+
 sub _parse_stylesheet {
   my ($self,$params) = @_;
 
@@ -397,15 +582,14 @@ sub _parse_stylesheet {
       $i->delete();
     }
 
-    # Recurse down tree
-    if (defined $i->content) {
+    # Recurse down tree only if we found a head block
+    if ((defined $i->content) && (defined $i->tag) && ($i->tag eq 'head')) {
       $stylesheet .= $self->_parse_stylesheet({tree_content => $i->content});
     }
   }
 
   return $stylesheet;
 }
-
 
 sub _collapse_inline_styles {
   my ($self,$params) = @_;
