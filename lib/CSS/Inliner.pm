@@ -507,6 +507,14 @@ sub _changelink_relative {
   }
 }
 
+sub __fix_relative_url {
+  my ($self,$params) = @_;
+
+  my $uri = URI->new($$params{url});
+  
+  return $$params{prefix} . "'" . $uri->abs($$params{base})->as_string ."'";
+}
+
 sub _expand_stylesheet {
   my ($self,$params) = @_;
 
@@ -535,7 +543,7 @@ sub _expand_stylesheet {
       my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
 
       #remove the trailing part of the baseref to create the point at which the relative urls below get attached
-      $baseref =~ s/[^\/]*?$//;
+      #$baseref =~ s/[^\/]*?$//;
 
       #absolutized the assetts within the stylesheet that are relative 
       $content =~ s/(url\()
@@ -544,7 +552,7 @@ sub _expand_stylesheet {
                  [^"'])*)
                   ["']?
             (?=\))
-           /$1\'$baseref$2\'/xsgi;
+           /$self->__fix_relative_url({prefix => $1, url => $2, base => $baseref})/exsgi;
 
       my $stylesheet = HTML::Element->new('style');
       $stylesheet->push_content($content);
