@@ -6,7 +6,7 @@ use Test::More;
 use Cwd;
 use CSS::Inliner;
 
-plan(tests => 20);
+plan(tests => 22);
 
 my %rules = (
     "li"                    => 1,
@@ -28,7 +28,9 @@ my %rules = (
     "div em" => 2,
     "div>em" => 2,
     "*" => 0,
-    "div#id-one div p>em" => 104
+    "div#id-one div p>em" => 104,
+    "html#simple body#internal" => 202,
+    "body#internal" => 101
 );
 
 foreach my $rule (keys %rules) {
