@@ -229,59 +229,59 @@ sub inlinify {
       #if an element matched a style within the document store the rule, the specificity
       #and the actually CSS attributes so we can inline it later
       foreach my $element (@{$elements}) {
-        $matched_elements{$element->address()} ||= [];
+      $matched_elements{$element->address()} ||= [];
         my %match_info = (
           rule     => $key,
           element  => $element,
           specificity   => $specificity,
           position => $count,
           css      => $self->_get_css()->get_properties({selector => $key}),
-          );
+        );
   
-          push(@{$matched_elements{$element->address()}}, \%match_info);
-          $count++;
-        }
+        push(@{$matched_elements{$element->address()}}, \%match_info);
+        $count++;
       }
-
-      #process all elements
-      foreach my $matches (values %matched_elements) {
-        my $element = $matches->[0]->{element};
-        # rules are sorted by specificity, and if there's a tie the position is used
-        # we sort with the lightest items first so that heavier items can override later
-        my @sorted_matches = sort { $a->{specificity} <=> $b->{specificity} || $a->{position} <=> $b->{position} } @$matches;
-
-        my %new_style;
-        foreach my $match (@sorted_matches) {
-          %new_style = (%new_style, %{$match->{css}});
-        }
-
-        # styles already inlined have greater precedence
-        if (defined($element->attr('style'))) {
-          my %cur_style = $self->_split({style => $element->attr('style')});
-          %new_style = (%new_style, %cur_style);
-        }
-
-        $element->attr('style', $self->_expand({properties => \%new_style}));
-      }
-
-      #at this point we have a document that contains the expanded inlined stylesheet
-      #BUT we need to collapse the properties to remove duplicate overridden styles
-      $self->_collapse_inline_styles();
-
-      # The entities list is the do-not-encode string from HTML::Entities
-      # with the single quote added.
-
-      # 3rd argument overrides the optional end tag, which for HTML::Element
-      # is just p, li, dt, dd - tags we want terminated for our purposes
-
-      $html = $self->_get_tree()->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
-    }
-    else {
-      $html = $self->{html};
     }
 
-    return $html;
+    #process all elements
+    foreach my $matches (values %matched_elements) {
+      my $element = $matches->[0]->{element};
+      # rules are sorted by specificity, and if there's a tie the position is used
+      # we sort with the lightest items first so that heavier items can override later
+      my @sorted_matches = sort { $a->{specificity} <=> $b->{specificity} || $a->{position} <=> $b->{position} } @$matches;
+
+      my %new_style;
+      foreach my $match (@sorted_matches) {
+        %new_style = (%new_style, %{$match->{css}});
+      }
+
+      # styles already inlined have greater precedence
+      if (defined($element->attr('style'))) {
+        my $cur_style = $self->_split({style => $element->attr('style')});
+        %new_style = (%new_style, %{$cur_style});
+      }
+
+      $element->attr('style', $self->_expand({properties => \%new_style}));
+    }
+
+    #at this point we have a document that contains the expanded inlined stylesheet
+    #BUT we need to collapse the properties to remove duplicate overridden styles
+    $self->_collapse_inline_styles();
+
+    # The entities list is the do-not-encode string from HTML::Entities
+    # with the single quote added.
+
+    # 3rd argument overrides the optional end tag, which for HTML::Element
+    # is just p, li, dt, dd - tags we want terminated for our purposes
+
+    $html = $self->_get_tree()->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
   }
+  else {
+    $html = $self->{html};
+  }
+
+  return $html;
+}
 
 ###########################################################################################################
 # from CSS spec at http://www.w3.org/TR/CSS21/cascade.html#specificity
@@ -520,10 +520,13 @@ sub _expand_stylesheet {
   my $stylesheets = ();
 
   #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @style = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag',qr/^style$/,'rel','type','text/css');
+  my @style = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag','style','type','text/css');
 
   #get the <link> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @link = $self->_get_tree()->look_down("_tag", "head")->look_down("_tag",qr/^link$/,'rel','stylesheet','type','text/css');
+  my @link = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag','link','rel','stylesheet','type','text/css');
+
+  warn scalar @style;
+  warn scalar @link;
 
   my @stylesheets = (@style,@link);
 
@@ -568,10 +571,23 @@ sub _parse_stylesheet {
 
   my $stylesheet = '';
 
-  #get the nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @head_content = $self->_get_tree()->look_down("_tag", "head")->look_down("_tag","style");
+  #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
+  my @style = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag','style','type','text/css');
+      
+  #get the <link> nodes underneath the head section - that's the only place stylesheets are allowed to live
+  my @link = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag','link','rel','stylesheet','type','text/css');
 
-  foreach my $i (@head_content) {
+  if (scalar @link) {
+    die 'Foriegn <link> reference found, cannot inline document properly';
+  }
+
+  #TODO - make it so we can fetch more than a single stylesheet :( the selectivity method can't handle
+  #we should be able to mix and match types...
+  if (scalar @style > 1) {
+    die 'CSS::Inliner can only process one set of styles within a document';
+  }
+  
+  foreach my $i (@style) {
     #process this node if the html media type is screen, all or undefined (which defaults to screen)
     if (($i->tag eq 'style') && (!$i->attr('media') || $i->attr('media') =~ m/\b(all|screen)\b/)) {
 
@@ -600,11 +616,9 @@ sub _collapse_inline_styles {
     next unless (ref $i eq 'HTML::Element' || ref $i eq 'HTML::TreeBuilder');
 
     if ($i->attr('style')) {
-      my $styles = {}; # hold the property value pairs
-      foreach my $pv_pair (split /;/,  $i->attr('style')) {
-        my ($key,$value) = split /:/, $pv_pair, 2;
-        $$styles{$key} = $value;
-      }
+
+      # hold the property value pairs
+      my $styles = $self->_split({style => $i->attr('style')});
 
       my $collapsed_style = '';
       foreach my $key (sort keys %{$styles}) { #sort for predictable output
@@ -686,7 +700,8 @@ sub _split {
     }
     $split{lc $1} = $2;
   }
-  return %split;
+
+  return \%split;
 }
 
 1;
