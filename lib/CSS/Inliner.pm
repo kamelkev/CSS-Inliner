@@ -171,9 +171,8 @@ sub read {
   $self->_get_tree()->store_comments(1);
   $self->_get_tree()->parse($$params{html});
 
-  #rip all the style blocks out of html tree, and return that separately
-  #the remaining html tree has no style block(s) now
-  my $stylesheet = $self->_parse_stylesheet({tree_content => $self->_get_tree()->content()});
+  #suck in the styles for later use from the head section - stylesheets anywhere else are invalid
+  my $stylesheet = $self->_parse_stylesheet();
 
   #save the data
   $self->_set_html({ html => $$params{html} });
@@ -267,7 +266,7 @@ sub inlinify {
 
       #at this point we have a document that contains the expanded inlined stylesheet
       #BUT we need to collapse the properties to remove duplicate overridden styles
-      $self->_collapse_inline_styles({content => $self->_get_tree()->content() });
+      $self->_collapse_inline_styles();
 
       # The entities list is the do-not-encode string from HTML::Entities
       # with the single quote added.
@@ -458,7 +457,7 @@ sub _fetch_html {
   # Change relative links to absolute links
   $self->_changelink_relative({ content => $doc->content, baseref => $baseref});
 
-  $self->_expand_stylesheet({ tree_content => $doc->content });
+  $self->_expand_stylesheet({ html_baseref => $baseref });
 
   return $doc->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
 }
@@ -518,52 +517,47 @@ sub __fix_relative_url {
 sub _expand_stylesheet {
   my ($self,$params) = @_;
 
-  my $stylesheets = 0; #we only allow for one declaration right now...
+  my $stylesheets = ();
 
-  foreach my $i (@{$$params{tree_content}}) {
-    next unless ref $i eq 'HTML::Element';
+  #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
+  my @style = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag',qr/^style$/,'rel','type','text/css');
 
-    if (($i->tag eq 'link') && (((defined $i->attr('rel')) && ($i->attr('rel') eq 'stylesheet')) || (((defined $i->attr('type')) && $i->attr('type') eq 'text/css')))) {
-      $stylesheets++;
-    }
+  #get the <link> nodes underneath the head section - that's the only place stylesheets are allowed to live
+  my @link = $self->_get_tree()->look_down("_tag", "head")->look_down("_tag",qr/^link$/,'rel','stylesheet','type','text/css');
 
-    #process this node if the html media type is screen, all or undefined (which defaults to screen)
-    if (($i->tag eq 'style') && (!$i->attr('media') || $i->attr('media') =~ m/\b(all|screen)\b/)) {
-      $stylesheets++;
-    }
+  my @stylesheets = (@style,@link);
 
-    #stop doing work right now, we won't be able to process successfully
-    if ($stylesheets > 1) {
-      die 'CSS::Inliner can only process one set of styles within a document';
-    }
+  #TODO - make it so we can fetch more than a single stylesheet :( the selectivity method can't handle
+  #we should be able to mix and match types...
+  if (scalar @stylesheets > 1) {
+    die 'CSS::Inliner can only process one set of styles within a document';
+  }
 
-    #now that we know we are ok to fetch...
-    if (($i->tag eq 'link') && (((defined $i->attr('rel')) && ($i->attr('rel') eq 'stylesheet')) || (((defined $i->attr('type')) && $i->attr('type') eq 'text/css')))) {
+  foreach my $i (@link) {
+    my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
 
-      my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
+    #absolutized the assetts within the stylesheet that are relative 
+    $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({prefix => $1, url => $2, base => $baseref})/exsgi;
 
-      #remove the trailing part of the baseref to create the point at which the relative urls below get attached
-      #$baseref =~ s/[^\/]*?$//;
+    my $stylesheet = HTML::Element->new('style');
+    $stylesheet->push_content($content);
 
-      #absolutized the assetts within the stylesheet that are relative 
-      $content =~ s/(url\()
-                  ["']?
-                  ((?:(?!https?:\/\/)(?!\))
-                 [^"'])*)
-                  ["']?
-            (?=\))
-           /$self->__fix_relative_url({prefix => $1, url => $2, base => $baseref})/exsgi;
+    $i->replace_with($stylesheet);
+  }
 
-      my $stylesheet = HTML::Element->new('style');
-      $stylesheet->push_content($content);
+  foreach my $i (@style) {
+    #use the baseref from the original document fetch
+    my $baseref = $$params{html_baseref};
 
-      $i->replace_with($stylesheet);
-    }
+    my $content = $i->content();
 
-    # Recurse down tree only if we found a head block
-    if (($i->tag eq 'head') && (defined $i->content)) {
-      $self->_expand_stylesheet({tree_content => $i->content});
-    }
+    #absolutized the assetts within the stylesheet that are relative 
+    $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({prefix => $1, url => $2, base => $baseref})/exsgi;
+
+    my $stylesheet = HTML::Element->new('style');
+    $stylesheet->push_content($content);
+
+    $i->replace_with($stylesheet);
   }
 
   return();
@@ -574,9 +568,10 @@ sub _parse_stylesheet {
 
   my $stylesheet = '';
 
-  foreach my $i (@{$$params{tree_content}}) {
-    next unless ref $i eq 'HTML::Element';
+  #get the nodes underneath the head section - that's the only place stylesheets are allowed to live
+  my @head_content = $self->_get_tree()->look_down("_tag", "head")->look_down("_tag","style");
 
+  foreach my $i (@head_content) {
     #process this node if the html media type is screen, all or undefined (which defaults to screen)
     if (($i->tag eq 'style') && (!$i->attr('media') || $i->attr('media') =~ m/\b(all|screen)\b/)) {
 
@@ -587,13 +582,8 @@ sub _parse_stylesheet {
 
         $stylesheet .= $item;
       }
-      $i->delete();
     }
-
-    # Recurse down tree only if we found a head block
-    if ((defined $i->content) && (defined $i->tag) && ($i->tag eq 'head')) {
-      $stylesheet .= $self->_parse_stylesheet({tree_content => $i->content});
-    }
+    $i->delete();
   }
 
   return $stylesheet;
@@ -602,11 +592,12 @@ sub _parse_stylesheet {
 sub _collapse_inline_styles {
   my ($self,$params) = @_;
 
-  my $content = $$params{content};
+  #check if we were passed a node to recurse from, otherwise use the root of the tree
+  my $content = exists($$params{content}) ? $$params{content} : [$self->_get_tree()];
 
   foreach my $i (@{$content}) {
 
-    next unless ref $i eq 'HTML::Element';
+    next unless (ref $i eq 'HTML::Element' || ref $i eq 'HTML::TreeBuilder');
 
     if ($i->attr('style')) {
       my $styles = {}; # hold the property value pairs
@@ -632,7 +623,7 @@ sub _collapse_inline_styles {
 
     # Recurse down tree
     if (defined $i->content) {
-      $self->_collapse_inline_styles({content => $i->content});
+      $self->_collapse_inline_styles({content => $i->content()});
     }
   }
 }
