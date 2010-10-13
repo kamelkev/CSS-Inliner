@@ -12,7 +12,7 @@ my $inliner = new CSS::Inliner();
 my $input = <<IN;
 <html>
   <head>
-    <style>
+    <style type="text/css">
     h4 {
 	background-image: url(http://www.example.com/test.jpg);
        }</style>

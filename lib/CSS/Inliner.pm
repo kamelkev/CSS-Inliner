@@ -525,9 +525,6 @@ sub _expand_stylesheet {
   #get the <link> nodes underneath the head section - that's the only place stylesheets are allowed to live
   my @link = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag','link','rel','stylesheet','type','text/css');
 
-  warn scalar @style;
-  warn scalar @link;
-
   my @stylesheets = (@style,@link);
 
   #TODO - make it so we can fetch more than a single stylesheet :( the selectivity method can't handle

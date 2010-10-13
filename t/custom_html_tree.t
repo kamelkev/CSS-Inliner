@@ -13,7 +13,7 @@ my $html = <<END;
 <html>
   <head>
     <title>Test Document</title>
-    <style type="text/javascript">
+    <style type="text/css">
     h1 { color: red; font-size: 20px }
     h2 { color: blue; font-size: 17px; }
     </style>

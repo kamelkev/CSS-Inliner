@@ -12,7 +12,7 @@ my $html = <<'END';
 <html>
   <head>
     <title>Test Document</title>
-    <style type="text/javascript">
+    <style type="text/css">
     h1 { font-size: 20px }
     h1.alert { color: red }
     h1.cool { color: blue }
