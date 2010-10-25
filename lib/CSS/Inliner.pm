@@ -221,22 +221,23 @@ sub inlinify {
       #skip over @import or anything else that might start with @ - not inlineable
       next if $key =~ /^\@/io;
 
-      my $elements = $self->_get_tree()->query($key);
+      my $query_result = $self->query({ selector => $key });
 
       # CSS rules cascade based on the specificity and order
       my $specificity = $self->specificity({rule => $key});
 
       #if an element matched a style within the document store the rule, the specificity
       #and the actually CSS attributes so we can inline it later
-      foreach my $element (@{$elements}) {
-      $matched_elements{$element->address()} ||= [];
+      foreach my $element (@{$query_result->get_elements()}) {
+
+       $matched_elements{$element->address()} ||= [];
         my %match_info = (
           rule     => $key,
           element  => $element,
           specificity   => $specificity,
           position => $count,
           css      => $self->_get_css()->get_properties({selector => $key}),
-        );
+         );
   
         push(@{$matched_elements{$element->address()}}, \%match_info);
         $count++;
@@ -281,6 +282,22 @@ sub inlinify {
   }
 
   return $html;
+}
+
+=pod
+
+=item query()
+
+Given a particular selector return back the applicable styles
+
+=back
+
+=cut
+
+sub query {
+  my ($self,$params) = @_;
+
+  return $self->_get_tree()->query($$params{selector});
 }
 
 ###########################################################################################################
@@ -331,7 +348,6 @@ L<http://www.w3.org/TR/CSS21/cascade.html#specificity>
 =back
 
 =cut
-
 
 #this method is a rip of the parser from HTML::Query, adjusted to count
 sub specificity {
@@ -457,7 +473,7 @@ sub _fetch_html {
   # Change relative links to absolute links
   $self->_changelink_relative({ content => $doc->content, baseref => $baseref});
 
-  $self->_expand_stylesheet({ html_baseref => $baseref });
+  $self->_expand_stylesheet({ content => $doc, html_baseref => $baseref });
 
   return $doc->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
 }
@@ -517,21 +533,19 @@ sub __fix_relative_url {
 sub _expand_stylesheet {
   my ($self,$params) = @_;
 
+  my $doc = $$params{content};
+
   my $stylesheets = ();
 
-  #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @style = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag','style','type','text/css');
+  my $head = $doc->look_down("_tag", "head"); # there should only be one
+
+  #get the external <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
+  my @style = $head->look_down('_tag','style','href',qr/^https?:\/\//);
 
   #get the <link> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @link = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag','link','rel','stylesheet','type','text/css');
+  my @link = $head->look_down('_tag','link','rel','stylesheet');
 
   my @stylesheets = (@style,@link);
-
-  #TODO - make it so we can fetch more than a single stylesheet :( the selectivity method can't handle
-  #we should be able to mix and match types...
-  if (scalar @stylesheets > 1) {
-    die 'CSS::Inliner can only process one set of styles within a document';
-  }
 
   foreach my $i (@link) {
     my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
@@ -539,7 +553,7 @@ sub _expand_stylesheet {
     #absolutized the assetts within the stylesheet that are relative 
     $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({prefix => $1, url => $2, base => $baseref})/exsgi;
 
-    my $stylesheet = HTML::Element->new('style');
+    my $stylesheet = HTML::Element->new('style', type => "text/css", rel=> "stylesheet");
     $stylesheet->push_content($content);
 
     $i->replace_with($stylesheet);
@@ -548,7 +562,7 @@ sub _expand_stylesheet {
   foreach my $i (@style) {
     #use the baseref from the original document fetch
     my $baseref = $$params{html_baseref};
-
+  
     my $content = $i->content();
 
     #absolutized the assetts within the stylesheet that are relative 
@@ -568,23 +582,21 @@ sub _parse_stylesheet {
 
   my $stylesheet = '';
 
+  #get the head section of the document
+  my $head = $self->_get_tree()->look_down("_tag", "head"); # there should only be one
+
   #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @style = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag','style','type','text/css');
-      
-  #get the <link> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @link = $self->_get_tree()->look_down("_tag", "head")->look_down('_tag','link','rel','stylesheet','type','text/css');
+  my @style = $head->look_down('_tag','style','type','text/css');
+ 
+  #get the <link> nodes underneath the head section - there should be *none* at this step in the process
+  my @link = $head->look_down('_tag','link','rel','stylesheet','type','text/css');
 
   if (scalar @link) {
-    die 'Foriegn <link> reference found, cannot inline document properly';
+    die 'Inliner only supports link tags if you fetch the document from a remote source';
   }
 
-  #TODO - make it so we can fetch more than a single stylesheet :( the selectivity method can't handle
-  #we should be able to mix and match types...
-  if (scalar @style > 1) {
-    die 'CSS::Inliner can only process one set of styles within a document';
-  }
-  
   foreach my $i (@style) {
+
     #process this node if the html media type is screen, all or undefined (which defaults to screen)
     if (($i->tag eq 'style') && (!$i->attr('media') || $i->attr('media') =~ m/\b(all|screen)\b/)) {
 
