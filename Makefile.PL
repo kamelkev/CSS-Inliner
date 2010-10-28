@@ -7,7 +7,7 @@ WriteMakefile(
     PREREQ_PM => {
 	'HTML::TreeBuilder' => 0,
         'CSS::Simple' => 2874,
-        'HTML::Query' => 0.06,
+        'HTML::Query' => 0.07,
         'LWP' => 0,
         'URI' => 0,
         'Test::More' => 0

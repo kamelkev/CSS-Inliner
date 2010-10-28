@@ -70,6 +70,7 @@ sub new {
     css => CSS::Simple->new(),
     html => undef,
     html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
+    query => HTML::Query->new(),
     strip_attrs => defined($$params{strip_attrs}) ? 1 : 0,
   };
 
@@ -171,6 +172,8 @@ sub read {
   $self->_get_tree()->store_comments(1);
   $self->_get_tree()->parse($$params{html});
 
+  $self->_get_query({tree => $self->_get_tree()});
+
   #suck in the styles for later use from the head section - stylesheets anywhere else are invalid
   my $stylesheet = $self->_parse_stylesheet();
 
@@ -224,7 +227,7 @@ sub inlinify {
       my $query_result = $self->query({ selector => $key });
 
       # CSS rules cascade based on the specificity and order
-      my $specificity = $self->specificity({rule => $key});
+      my $specificity = $self->specificity({selector => $key});
 
       #if an element matched a style within the document store the rule, the specificity
       #and the actually CSS attributes so we can inline it later
@@ -297,124 +300,23 @@ Given a particular selector return back the applicable styles
 sub query {
   my ($self,$params) = @_;
 
-  return $self->_get_tree()->query($$params{selector});
+  return $self->_get_query()->query($$params{selector});
 }
-
-###########################################################################################################
-# from CSS spec at http://www.w3.org/TR/CSS21/cascade.html#specificity
-###########################################################################################################
-# A selector's specificity is calculated as follows:
-#
-#     * count the number of ID attributes in the selector (= a)
-#     * count the number of other attributes and pseudo-classes in the selector (= b)
-#     * count the number of element names in the selector (= c)
-#     * ignore pseudo-elements.
-#
-# Concatenating the three numbers a-b-c (in a number system with a large base) gives the specificity.
-#
-# Example(s):
-#
-# Some examples:
-#
-# *             {}  /* a=0 b=0 c=0 -> specificity =   0 */
-# LI            {}  /* a=0 b=0 c=1 -> specificity =   1 */
-# UL LI         {}  /* a=0 b=0 c=2 -> specificity =   2 */
-# UL OL+LI      {}  /* a=0 b=0 c=3 -> specificity =   3 */
-# H1 + *[REL=up]{}  /* a=0 b=1 c=1 -> specificity =  11 */
-# UL OL LI.red  {}  /* a=0 b=1 c=3 -> specificity =  13 */
-# LI.red.level  {}  /* a=0 b=2 c=1 -> specificity =  21 */
-# #x34y         {}  /* a=1 b=0 c=0 -> specificity = 100 */
-###########################################################################################################
 
 =pod
 
 =item specificity()
 
-Calculate the specificity for any given passed selector, a critical factor in determining how best to apply the cascade
-
-A selector's specificity is calculated as follows:
-
-* count the number of ID attributes in the selector (= a)
-* count the number of other attributes and pseudo-classes in the selector (= b)
-* count the number of element names in the selector (= c)
-* ignore pseudo-elements.
-
-The specificity is based only on the form of the selector. In particular, a selector of the form "[id=p33]" is counted 
-as an attribute selector (a=0, b=0, c=1, d=0), even if the id attribute is defined as an "ID" in the source document's DTD. 
-
-See the following spec for additional details:
-L<http://www.w3.org/TR/CSS21/cascade.html#specificity>
+Given a particular selector return back the associated selectivity
 
 =back
 
 =cut
 
-#this method is a rip of the parser from HTML::Query, adjusted to count
 sub specificity {
   my ($self,$params) = @_;
 
-  my $selectivity = 0;
-  my $comops = 0;
-  my $query = $$params{rule};
-
-  while (1) {
-    my $pos = pos($query) || 0;
-    my $relationship = '';
-    my $leading_whitespace;
-
-    # ignore any leading whitespace
-    if ($query =~ / \G (\s+) /cgsx) {
-      $leading_whitespace = defined($1) ? 1 : 0;
-    }
-
-    # grandchild selector is whitespace sensitive, requires leading whitespace
-    if ($leading_whitespace && $comops && ($query =~ / \G (\*) \s+ /cgx)) {
-      #have to eat this character so regex can continue
-    }
-
-    # get other relationship modifiers
-    if ($query =~ / \G (>|\+) \s* /cgx) {
-      #have to eat this character so regex can continue
-    }
-
-    # optional leading word is a tag name
-    if ($query =~ / \G(?!\*(?:\s+|$|\[))([\w*]+) /cgx) {
-      $selectivity += 1;
-    }
-
-    if (($leading_whitespace || $comops == 0) && ($query =~ / \G (\*) /cgx)) {
-      #eat the universal selector here
-    }
-
-    # loop to properly calculate specificity for term
-    while (1) {
-      my $inner = pos($query);
-      
-      # that can be followed by (or the query can start with) a #id
-      if ($query =~ / \G \# ([\w\-]+) /cgx) {
-        $selectivity += 100;
-      }
-
-      # and/or a .class
-      if ($query =~ / \G \. ([\w\-]+) /cgx) {
-        $selectivity += 10;
-      }
-
-      # and/or none or more [ ] attribute specs
-      if ($query =~ / \G \[ (.*?) \] /cgx) {
-        $selectivity += 10;
-      }
-      
-      last if (defined($inner) && ($inner == pos($query)));
-    }
-
-    # so we can check we've done something
-    $comops++;
-    
-    last if ($pos == pos($query));
-  }
-
-  return $selectivity;
+  return $self->_get_query()->get_specificity($$params{selector});
 }
 
 ####################################################################
@@ -655,6 +557,16 @@ sub _get_tree {
   my ($self,$params) = @_;
 
   return $self->{html_tree};
+}
+
+sub _get_query {
+  my ($self,$params) = @_;
+
+  if (exists $$params{tree}) {
+    $self->{query} = HTML::Query->new($self->_get_tree());
+  }
+
+  return $self->{query};
 }
 
 sub _get_css {
