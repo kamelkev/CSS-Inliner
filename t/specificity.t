@@ -6,7 +6,7 @@ use Test::More;
 use Cwd;
 use CSS::Inliner;
 
-plan(tests => 22);
+plan(tests => 23);
 
 my %rules = (
     "li"                    => 1,
@@ -24,6 +24,7 @@ my %rules = (
     "#blah td.foo"          => 111,
     "#blah td.foo span"     => 112,
     "#blah td.foo span.bar" => 122,
+    "div#id-one p>em span[class=under_class2] + span[class~=under_class3]" => 125,
     "span[title='w00t'][title].new-class#test-id[lang='en']" => 141,
     "div em" => 2,
     "div>em" => 2,
@@ -33,8 +34,11 @@ my %rules = (
     "body#internal" => 101
 );
 
+my $inliner = CSS::Inliner->new();
+
 foreach my $rule (keys %rules) {
-  my $weight = CSS::Inliner->specificity({rule => $rule});
+  
+  my $weight = $inliner->specificity({selector => $rule});
 
   is($weight, $rules{$rule}, "correct weight for \"$rule\"");
 }
