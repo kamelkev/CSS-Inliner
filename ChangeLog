@@ -43,7 +43,23 @@
         * Restructured parts of code and added some get methods to ease future testing
         * Adjusted some variable names to be more correct
 
-****	*********	Kevin Kamel <kamelkev@mailermailer.com>
-        * Include contribution from David xyz <david@ytfc.com>
+2852	2010-10-27	Kevin Kamel <kamelkev@mailermailer.com>
+	* Manifest updated to represent all project files
+	* Rework module hierarchy, adjust all project files to match
+	* Include contributions from Michael Peters <mpeters@plusthree.com>
+	  - Add support for specificity calculations
+	  - Add support for style application that closely approximates what a browser does
+	  - Included tests to validate above behaviour
+	* Added extensive tests added to validate described cascade behaviour
+	  - Fixed all discovered and known bugs
+        * Include contribution from David Stevenson <david@ytfc.com>
 	  - allow for proper parsing of background urls, previously broken
 	  - include test for validating fix
+	* Update CSS storage module to CSS::Simple
+	* Add code to fetch remote stylesheets
+	* Include contribution from Vivek Khera <vivek@khera.org>
+	  - Add support for adusting all relative references to absolute reference
+	* Add test to remotely fetch an entire document
+	* Simplify some recursive methods
+	* Allow parsing of multiple stylesheets - stacking functionality from CSS::Simple
+	  seems to allow this feature to just work
