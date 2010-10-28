@@ -10,6 +10,10 @@ t/advanced_strip.t
 t/basic.t
 t/cascade.t
 t/custom_html_tree.t
+t/linktest.t
 t/ordering.t
 t/specificity.t
 t/html/acidtest.html
+t/html/acidtest_result.html
+t/html/linktest.html
+t/html/linktest_result.html
