@@ -4,7 +4,6 @@ MANIFEST
 Makefile.PL
 README
 t/acidtest.t
-t/acidtest_result.t
 t/advanced.t
 t/advanced_strip.t
 t/basic.t
