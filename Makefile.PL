@@ -1,4 +1,4 @@
-# $Id: Makefile.PL 2170 2009-10-08 12:00:00Z kamelkev $
+# $Id$
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
@@ -6,8 +6,10 @@ WriteMakefile(
     PMLIBDIRS => [ 'lib' ],
     PREREQ_PM => {
 	'HTML::TreeBuilder' => 0,
-        'CSS::Tiny' => 0,
-        'HTML::Query' => 0.03,
+        'CSS::Simple' => 2874,
+        'HTML::Query' => 0.06,
+        'LWP' => 0,
+        'URI' => 0,
         'Test::More' => 0
     },
     dist => {
