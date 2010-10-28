@@ -22,8 +22,4 @@ my $inliner = CSS::Inliner->new();
 $inliner->read({html => $html});
 my $inlined = $inliner->inlinify();
 
-warn $inlined;
-
-
-
 ok($inlined eq $correct_result, 'result was correct');
