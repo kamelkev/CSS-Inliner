@@ -57,6 +57,8 @@ B<html_tree> (optional). Pass in a custom instance of HTML::Treebuilder
 
 B<strip_attrs> (optional). Remove all "id" and "class" attributes during inlining
 
+B<leave_style> (optional). Leave style/link tags alone within <head> during inlining
+
 =back
 =cut
 
@@ -72,6 +74,7 @@ sub new {
     html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
     query => HTML::Query->new(),
     strip_attrs => defined($$params{strip_attrs}) ? 1 : 0,
+    strip_style => defined($$params{leave_style}) ? 1 : 0,
   };
 
   bless $self, $class;
@@ -510,7 +513,9 @@ sub _parse_stylesheet {
         $stylesheet .= $item;
       }
     }
-    $i->delete();
+    unless ($self->_leave_style()) {
+      $i->delete();
+    }
   }
 
   return $stylesheet;
@@ -579,6 +584,12 @@ sub _strip_attrs {
   my ($self,$params) = @_;
 
   return $self->{strip_attrs};
+}
+
+sub _leave_style {
+  my ($self,$params) = @_;
+
+  return $self->{leave_style};
 }
 
 sub _set_html {
