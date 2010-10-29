@@ -63,3 +63,6 @@
 	* Simplify some recursive methods
 	* Allow parsing of multiple stylesheets - stacking functionality from CSS::Simple
 	  seems to allow this feature to just work
+
+xxx	2010-10-??	Kevin Kamel <kamelkev@mailermailer.com>
+	* Add new flag to "leave_style" blocks while reading and parsing the stylesheets
