@@ -74,7 +74,7 @@ sub new {
     html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
     query => HTML::Query->new(),
     strip_attrs => defined($$params{strip_attrs}) ? 1 : 0,
-    strip_style => defined($$params{leave_style}) ? 1 : 0,
+    leave_style => defined($$params{leave_style}) ? 1 : 0,
   };
 
   bless $self, $class;
@@ -513,6 +513,7 @@ sub _parse_stylesheet {
         $stylesheet .= $item;
       }
     }
+
     unless ($self->_leave_style()) {
       $i->delete();
     }
