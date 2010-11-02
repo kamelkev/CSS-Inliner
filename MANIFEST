@@ -8,7 +8,9 @@ t/advanced.t
 t/advanced_strip.t
 t/basic.t
 t/cascade.t
+t/css_url.t
 t/custom_html_tree.t
+t/fetch.perl
 t/linktest.t
 t/ordering.t
 t/specificity.t
