@@ -66,3 +66,10 @@
 
 xxx	2010-10-??	Kevin Kamel <kamelkev@mailermailer.com>
 	* Add new flag to "leave_style" blocks while reading and parsing the stylesheets
+	* Include contributions from Michael Stevens (michael.stevens@dianomi.com)
+	 - Fix podchecker complaints on Inliner.pm
+	 - Add a .gitignore for perl module cruft.
+	 - Add pod tests
+	* Path fixes from contributor Michael Stevens
+	 - Beef up error reporting so you can tell which files are missing
+	 - Resolve dumb problem with tests whereby if a username had "t" in it the test failed
