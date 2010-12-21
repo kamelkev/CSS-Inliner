@@ -13,6 +13,7 @@ t/custom_html_tree.t
 t/fetch.perl
 t/linktest.t
 t/ordering.t
+t/pod.t
 t/specificity.t
 t/html/acidtest.html
 t/html/acidtest_result.html

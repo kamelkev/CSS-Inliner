@@ -60,6 +60,7 @@ B<strip_attrs> (optional). Remove all "id" and "class" attributes during inlinin
 B<leave_style> (optional). Leave style/link tags alone within <head> during inlining
 
 =back
+
 =cut
 
 sub new {
@@ -195,8 +196,6 @@ Processes the html data that was entered through either 'read' or
 'read_file', returns a scalar that contains a composite chunk of html
 that has inline styles instead of a top level <style> declaration.
 
-=back
-
 =cut
 
 sub inlinify {
@@ -295,8 +294,6 @@ sub inlinify {
 =item query()
 
 Given a particular selector return back the applicable styles
-
-=back
 
 =cut
 
