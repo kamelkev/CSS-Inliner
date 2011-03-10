@@ -64,7 +64,7 @@
 	* Allow parsing of multiple stylesheets - stacking functionality from CSS::Simple
 	  seems to allow this feature to just work
 
-3033	2010-10-??	Kevin Kamel <kamelkev@mailermailer.com>
+3042	2011-03-10	Kevin Kamel <kamelkev@mailermailer.com>
 	* Add new flag to "leave_style" blocks while reading and parsing the stylesheets
 	* Include contributions from Michael Stevens (michael.stevens@dianomi.com)
 	 - Fix podchecker complaints on Inliner.pm
