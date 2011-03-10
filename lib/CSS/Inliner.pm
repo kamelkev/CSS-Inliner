@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright 2009 MailerMailer, LLC - http://www.mailermailer.com
+# Copyright 2011 MailerMailer, LLC - http://www.mailermailer.com
 #
 # Based loosely on the TamTam RubyForge project:
 # http://tamtam.rubyforge.org/
