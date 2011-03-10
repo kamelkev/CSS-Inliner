@@ -286,7 +286,7 @@ sub inlinify {
     $html = $self->{html};
   }
 
-  return $html;
+  return $html . "\n";
 }
 
 =pod
