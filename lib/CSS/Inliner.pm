@@ -322,6 +322,8 @@ Given a particular selector return back the applicable styles
 sub query {
   my ($self,$params) = @_;
 
+  $self->_check_object();
+
   unless ($self->_query()) {
     $self->_init_query();
   }
@@ -341,6 +343,8 @@ Given a particular selector return back the associated selectivity
 
 sub specificity {
   my ($self,$params) = @_;
+
+  $self->_check_object();
 
   unless ($self->_query()) {
     $self->_init_query();
@@ -370,6 +374,8 @@ sub _check_object {
 
 sub _fetch_url {
   my ($self,$params) = @_;
+
+  $self->_check_object();
 
   # Create a user agent object
   my $ua = LWP::UserAgent->new;
@@ -407,6 +413,8 @@ sub _fetch_url {
 sub _fetch_html {
   my ($self,$params) = @_;
 
+  $self->_check_object();
+
   my ($content,$baseref) = $self->_fetch_url({ url => $$params{url} });
 
   # Build the HTML tree
@@ -424,6 +432,8 @@ sub _fetch_html {
 
 sub _changelink_relative {
   my ($self,$params) = @_;
+
+  $self->_check_object();
 
   my $base = $$params{baseref};
   
@@ -469,6 +479,8 @@ sub _changelink_relative {
 sub __fix_relative_url {
   my ($self,$params) = @_;
 
+  $self->_check_object();
+
   my $uri = URI->new($$params{url});
   
   return $$params{prefix} . "'" . $uri->abs($$params{base})->as_string ."'";
@@ -476,6 +488,8 @@ sub __fix_relative_url {
 
 sub _expand_stylesheet {
   my ($self,$params) = @_;
+
+  $self->_check_object();
 
   my $doc = $$params{content};
 
@@ -524,6 +538,8 @@ sub _expand_stylesheet {
 sub _parse_stylesheet {
   my ($self,$params) = @_;
 
+  $self->_check_object();
+
   my $stylesheet = '';
 
   #get the head section of the document
@@ -563,6 +579,8 @@ sub _parse_stylesheet {
 
 sub _collapse_inline_styles {
   my ($self,$params) = @_;
+
+  $self->_check_object();
 
   #check if we were passed a node to recurse from, otherwise use the root of the tree
   my $content = exists($$params{content}) ? $$params{content} : [$self->_html_tree()];
@@ -611,6 +629,8 @@ sub _init_query {
 sub _expand {
   my ($self, $params) = @_;
 
+  $self->_check_object();
+
   my $properties = $$params{properties};
   my $inline = '';
   foreach my $key (keys %{$properties}) {
@@ -622,6 +642,9 @@ sub _expand {
 
 sub _split {
   my ($self, $params) = @_;
+
+  $self->_check_object();
+
   my $style = $params->{style};
   my %split;
 
