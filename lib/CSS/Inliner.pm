@@ -63,6 +63,24 @@ B<leave_style> (optional). Leave style/link tags alone within <head> during inli
 
 =cut
 
+BEGIN {
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','leave_style'];
+
+  #generate all the getter/setter we need
+  foreach my $member (@{$members}) {
+    no strict 'refs';
+    *{'_' . $member} = sub {
+      my ($self,$value) = @_;
+
+      $self->_check_object();
+
+      $self->{$member} = $value if defined($value);
+
+      return $self->{$member};
+    }
+  }
+}
+
 sub new {
   my ($proto, $params) = @_;
 
@@ -73,7 +91,7 @@ sub new {
     css => CSS::Simple->new(),
     html => undef,
     html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
-    query => HTML::Query->new(),
+    query => undef,
     strip_attrs => defined($$params{strip_attrs}) ? 1 : 0,
     leave_style => defined($$params{leave_style}) ? 1 : 0,
   };
@@ -109,6 +127,8 @@ $self->fetch_file({ url => 'http://www.example.com' });
 sub fetch_file {
   my ($self,$params) = @_;
 
+  $self->_check_object();
+
   unless ($params && $$params{url}) {
     croak "You must pass in hash params that contain a url argument";
   }
@@ -136,6 +156,8 @@ $self->read_file({filename => 'myfile.html'});
 
 sub read_file {
   my ($self,$params) = @_;
+
+  $self->_check_object();
 
   unless ($params && $$params{filename}) {
     croak "You must pass in hash params that contain a filename argument";
@@ -169,21 +191,23 @@ $self->read({html => $html});
 sub read {
   my ($self,$params) = @_;
 
+  $self->_check_object();
+
   unless ($params && $$params{html}) {
     croak "You must pass in hash params that contains html data";
   }
 
-  $self->_get_tree()->store_comments(1);
-  $self->_get_tree()->parse($$params{html});
+  $self->_html_tree()->store_comments(1);
+  $self->_html_tree()->parse($$params{html});
 
-  $self->_get_query({tree => $self->_get_tree()});
+  $self->_init_query();
 
   #suck in the styles for later use from the head section - stylesheets anywhere else are invalid
   my $stylesheet = $self->_parse_stylesheet();
 
   #save the data
-  $self->_set_html({ html => $$params{html} });
-  $self->_set_stylesheet({ stylesheet => $stylesheet});
+  $self->_html($$params{html});
+  $self->_stylesheet($stylesheet);
 
   return();
 }
@@ -201,24 +225,22 @@ that has inline styles instead of a top level <style> declaration.
 sub inlinify {
   my ($self,$params) = @_;
 
-  unless ($self && ref $self) {
-    croak "You must instantiate this class in order to properly use it";
-  }
+  $self->_check_object();
 
-  unless ($self->{html} && defined $self->_get_tree()) {
+  unless ($self->_html() && $self->_html_tree()) {
     croak "You must instantiate and read in your content before inlinifying";
   }
 
   my $html;
-  if (defined $self->_get_css()) {
+  if (defined $self->_css()) {
     #parse and store the stylesheet as a hash object
 
-    $self->_get_css()->read({css => $self->{stylesheet}});
+    $self->_css()->read({css => $self->_stylesheet()});
 
     my %matched_elements;
     my $count = 0;
 
-    foreach my $key ($self->_get_css()->get_selectors()) {
+    foreach my $key ($self->_css()->get_selectors()) {
 
       #skip over psuedo selectors, they are not mappable the same
       next if $key =~ /\w:(?:active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter)\b/io;
@@ -241,7 +263,7 @@ sub inlinify {
           element  => $element,
           specificity   => $specificity,
           position => $count,
-          css      => $self->_get_css()->get_properties({selector => $key}),
+          css      => $self->_css()->get_properties({selector => $key}),
          );
   
         push(@{$matched_elements{$element->address()}}, \%match_info);
@@ -280,7 +302,7 @@ sub inlinify {
     # 3rd argument overrides the optional end tag, which for HTML::Element
     # is just p, li, dt, dd - tags we want terminated for our purposes
 
-    $html = $self->_get_tree()->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+    $html = $self->_html_tree()->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
   }
   else {
     $html = $self->{html};
@@ -300,7 +322,11 @@ Given a particular selector return back the applicable styles
 sub query {
   my ($self,$params) = @_;
 
-  return $self->_get_query()->query($$params{selector});
+  unless ($self->_query()) {
+    $self->_init_query();
+  }
+
+  return $self->_query()->query($$params{selector});
 }
 
 =pod
@@ -316,7 +342,11 @@ Given a particular selector return back the associated selectivity
 sub specificity {
   my ($self,$params) = @_;
 
-  return $self->_get_query()->get_specificity($$params{selector});
+  unless ($self->_query()) {
+    $self->_init_query();
+  }
+
+  return $self->_query()->get_specificity($$params{selector});
 }
 
 ####################################################################
@@ -325,6 +355,18 @@ sub specificity {
 # I am working to finalize the get/set methods to make them public #
 #                                                                  #
 ####################################################################
+
+
+sub _check_object {
+  my ($self, $params) = @_;
+
+  unless (ref $self) {
+   croak "You must instantiate this class in order to properly use it";
+  }
+
+  return ();
+}
+
 
 sub _fetch_url {
   my ($self,$params) = @_;
@@ -485,7 +527,7 @@ sub _parse_stylesheet {
   my $stylesheet = '';
 
   #get the head section of the document
-  my $head = $self->_get_tree()->look_down("_tag", "head"); # there should only be one
+  my $head = $self->_html_tree()->look_down("_tag", "head"); # there should only be one
 
   #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
   my @style = $head->look_down('_tag','style','type','text/css');
@@ -523,7 +565,7 @@ sub _collapse_inline_styles {
   my ($self,$params) = @_;
 
   #check if we were passed a node to recurse from, otherwise use the root of the tree
-  my $content = exists($$params{content}) ? $$params{content} : [$self->_get_tree()];
+  my $content = exists($$params{content}) ? $$params{content} : [$self->_html_tree()];
 
   foreach my $i (@{$content}) {
 
@@ -556,54 +598,14 @@ sub _collapse_inline_styles {
   }
 }
 
-sub _get_tree {
+sub _init_query {
   my ($self,$params) = @_;
 
-  return $self->{html_tree};
-}
+  $self->_check_object();
 
-sub _get_query {
-  my ($self,$params) = @_;
+  $self->{query} = HTML::Query->new($self->_html_tree());
 
-  if (exists $$params{tree}) {
-    $self->{query} = HTML::Query->new($self->_get_tree());
-  }
-
-  return $self->{query};
-}
-
-sub _get_css {
-  my ($self,$params) = @_;
-
-  return $self->{css};
-}
-
-sub _strip_attrs {
-  my ($self,$params) = @_;
-
-  return $self->{strip_attrs};
-}
-
-sub _leave_style {
-  my ($self,$params) = @_;
-
-  return $self->{leave_style};
-}
-
-sub _set_html {
-  my ($self,$params) = @_;
-
-  $self->{html} = $$params{html};
-
-  return $self->{html};
-}
-
-sub _set_stylesheet {
-  my ($self,$params) = @_;
-
-  $self->{stylesheet} = $$params{stylesheet};
-
-  return $self->{stylesheet};
+  return();
 }
 
 sub _expand {
