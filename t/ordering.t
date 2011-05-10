@@ -30,7 +30,7 @@ END
 
 my $inliner = CSS::Inliner->new();
 $inliner->read({html => $html});
-my $css = $inliner->_get_css();
+my $css = $inliner->_css();
 
 #shuffle stored styles around
 my $shuffle1 = 0;
