@@ -591,8 +591,12 @@ sub _collapse_inline_styles {
 
     if ($i->attr('style')) {
 
+      #flatten out the styles currently in place on this entity
+      my $existing_styles = $i->attr('style');
+      $existing_styles =~ tr/\n\t/  /;
+
       # hold the property value pairs
-      my $styles = $self->_split({style => $i->attr('style')});
+      my $styles = $self->_split({style => $existing_styles});
 
       my $collapsed_style = '';
       foreach my $key (sort keys %{$styles}) { #sort for predictable output
