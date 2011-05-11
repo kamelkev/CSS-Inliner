@@ -44,6 +44,29 @@ document.  Specifically this is intended for the ease of generating
 HTML emails.  This is useful as even in 2009 Gmail and Hotmail don't
 support top level <style> declarations.
 
+=cut
+
+BEGIN {
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','leave_style','suppress_errors','content_warnings'];
+
+  #generate all the getter/setter we need
+  foreach my $member (@{$members}) {
+    no strict 'refs';
+
+    *{'_' . $member} = sub {
+      my ($self,$value) = @_;
+
+      $self->_check_object();
+
+      $self->{$member} = $value if defined($value);
+
+      return $self->{$member};
+    }
+  }
+}
+
+=pod
+
 =head1 CONSTRUCTOR
 
 =over 4
@@ -63,24 +86,6 @@ B<leave_style> (optional). Leave style/link tags alone within <head> during inli
 
 =cut
 
-BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','leave_style'];
-
-  #generate all the getter/setter we need
-  foreach my $member (@{$members}) {
-    no strict 'refs';
-    *{'_' . $member} = sub {
-      my ($self,$value) = @_;
-
-      $self->_check_object();
-
-      $self->{$member} = $value if defined($value);
-
-      return $self->{$member};
-    }
-  }
-}
-
 sub new {
   my ($proto, $params) = @_;
 
@@ -88,12 +93,14 @@ sub new {
 
   my $self = {
     stylesheet => undef,
-    css => CSS::Simple->new(),
+    css => CSS::Simple->new({ suppress_errors => 1}),
     html => undef,
     html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
     query => undef,
-    strip_attrs => defined($$params{strip_attrs}) ? 1 : 0,
-    leave_style => defined($$params{leave_style}) ? 1 : 0,
+    content_warnings => undef,
+    strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
+    leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
+    suppress_errors => (defined($$params{suppress_errors}) && $$params{suppress_errors}) ? 1 : 0,
   };
 
   bless $self, $class;
@@ -197,6 +204,8 @@ sub read {
     croak "You must pass in hash params that contains html data";
   }
 
+  $self->_content_warnings([]); # overwrite any existing warnings
+
   $self->_html_tree()->store_comments(1);
   $self->_html_tree()->parse($$params{html});
 
@@ -248,7 +257,17 @@ sub inlinify {
       #skip over @import or anything else that might start with @ - not inlineable
       next if $key =~ /^\@/io;
 
-      my $query_result = $self->query({ selector => $key });
+      my $query_result;
+
+      #check to see if query fails, possible for jacked selectors
+      eval { 
+        $query_result = $self->query({ selector => $key });
+      }; 
+
+      if ($@) {
+        $self->_report_error({ info => $@->info() });
+        next; 
+      }
 
       # CSS rules cascade based on the specificity and order
       my $specificity = $self->specificity({selector => $key});
@@ -371,6 +390,22 @@ sub _check_object {
   return ();
 }
 
+sub _report_error {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  if ($self->_suppress_errors()) {
+    my $warnings = $self->_content_warnings();
+    push @{$warnings}, $$params{info};
+    $self->_content_warnings($warnings);
+  }
+  else {
+    croak $$params{info};
+  }
+ 
+  return();
+}
 
 sub _fetch_url {
   my ($self,$params) = @_;
@@ -655,7 +690,7 @@ sub _split {
   # Split into properties
   foreach ( grep { /\S/ } split /\;/, $style ) {
     unless ( /^\s*([\w._-]+)\s*:\s*(.*?)\s*$/ ) {
-      croak "Invalid or unexpected property '$_' in style '$style'";
+      $self->_report_error({ info => "aInvalid or unexpected property '$_' in style '$style'"});
     }
     $split{lc $1} = $2;
   }
