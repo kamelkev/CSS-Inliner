@@ -69,7 +69,7 @@ BEGIN {
 
 =head1 CONSTRUCTOR
 
-=over 4
+=over 3
 
 =item new ([ OPTIONS ])
 
@@ -113,7 +113,7 @@ sub new {
 
 =pod
 
-=over 5
+=over 8
 
 =item fetch_file( params )
 
@@ -246,20 +246,24 @@ sub inlinify {
 
     $self->_css()->read({css => $self->_stylesheet()});
 
+    my $content_warns = $self->_css()->content_warnings();
+
+    $self->_content_warnings($content_warns);
+
     my %matched_elements;
     my $count = 0;
 
     foreach my $key ($self->_css()->get_selectors()) {
 
       #skip over psuedo selectors, they are not mappable the same
-      if ($key =~ /\w:(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter))\b/io) {
+      if ($key =~ /[\w\*]:(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter|first-child|first-child))\b/io) {
         $self->_report_warning({ info => "The pseudo-class ':$1' cannot be supported inline" });
         next; 
       }
 
       #skip over @import or anything else that might start with @ - not inlineable
       if ($key =~ /^\@/io) {
-        $self->_report_warning({ info => "The directive $key cannot be supported inline" });
+        $self->_report_warning({ info => "The directive '$key' cannot be supported inline" });
         next;
       }
 
@@ -362,8 +366,6 @@ sub query {
 
 Given a particular selector return back the associated selectivity
 
-=back
-
 =cut
 
 sub specificity {
@@ -376,6 +378,27 @@ sub specificity {
   }
 
   return $self->_query()->get_specificity($$params{selector});
+}
+
+=pod
+   
+=item content_warnings()
+  
+Return back any warnings thrown while inlining a given block of content.
+
+Note: content warnings are initialized at inlining time, not at read time. In
+order to receive back content feedback you must perform inlinify() first
+  
+=back
+
+=cut
+
+sub content_warnings {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  return $self->_content_warnings();
 }
 
 ####################################################################
