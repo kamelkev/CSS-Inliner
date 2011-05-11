@@ -46,4 +46,3 @@ ok($inlined =~ m/<p style="color: #123123; font-size: 8px;">Nunc augue/, 'div p 
 ok($inlined =~ m/<p>Nulla/, 'no rule for just "p"');
 ok($inlined !~ m/<style/, 'no style blocks left');
 ok($inlined !~ m/yellow/, ':hover pseudo-attribute was ignored');
-

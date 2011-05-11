@@ -47,7 +47,7 @@ support top level <style> declarations.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','leave_style','suppress_errors','content_warnings'];
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','leave_style','warns_as_errors','content_warnings'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -93,14 +93,14 @@ sub new {
 
   my $self = {
     stylesheet => undef,
-    css => CSS::Simple->new({ suppress_errors => 1}),
+    css => CSS::Simple->new({ warns_as_errors => $$params{warns_as_errors}}),
     html => undef,
     html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
     query => undef,
     content_warnings => undef,
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
-    suppress_errors => (defined($$params{suppress_errors}) && $$params{suppress_errors}) ? 1 : 0,
+    warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
   };
 
   bless $self, $class;
@@ -204,8 +204,6 @@ sub read {
     croak "You must pass in hash params that contains html data";
   }
 
-  $self->_content_warnings([]); # overwrite any existing warnings
-
   $self->_html_tree()->store_comments(1);
   $self->_html_tree()->parse($$params{html});
 
@@ -236,6 +234,8 @@ sub inlinify {
 
   $self->_check_object();
 
+  $self->_content_warnings([]); # overwrite any existing warnings
+
   unless ($self->_html() && $self->_html_tree()) {
     croak "You must instantiate and read in your content before inlinifying";
   }
@@ -252,10 +252,16 @@ sub inlinify {
     foreach my $key ($self->_css()->get_selectors()) {
 
       #skip over psuedo selectors, they are not mappable the same
-      next if $key =~ /\w:(?:active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter)\b/io;
+      if ($key =~ /\w:(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter))\b/io) {
+        $self->_report_warning({ info => "The pseudo-class ':$1' cannot be supported inline" });
+        next; 
+      }
 
       #skip over @import or anything else that might start with @ - not inlineable
-      next if $key =~ /^\@/io;
+      if ($key =~ /^\@/io) {
+        $self->_report_warning({ info => "The directive $key cannot be supported inline" });
+        next;
+      }
 
       my $query_result;
 
@@ -265,7 +271,7 @@ sub inlinify {
       }; 
 
       if ($@) {
-        $self->_report_error({ info => $@->info() });
+        $self->_report_warning({ info => $@->info() });
         next; 
       }
 
@@ -390,18 +396,18 @@ sub _check_object {
   return ();
 }
 
-sub _report_error {
+sub _report_warning {
   my ($self,$params) = @_;
 
   $self->_check_object();
 
-  if ($self->_suppress_errors()) {
+  if ($self->_warns_as_errors()) {
+    croak $$params{info};
+  }
+  else {
     my $warnings = $self->_content_warnings();
     push @{$warnings}, $$params{info};
     $self->_content_warnings($warnings);
-  }
-  else {
-    croak $$params{info};
   }
  
   return();
@@ -690,7 +696,7 @@ sub _split {
   # Split into properties
   foreach ( grep { /\S/ } split /\;/, $style ) {
     unless ( /^\s*([\w._-]+)\s*:\s*(.*?)\s*$/ ) {
-      $self->_report_error({ info => "aInvalid or unexpected property '$_' in style '$style'"});
+      $self->_report_warning({ info => "aInvalid or unexpected property '$_' in style '$style'"});
     }
     $split{lc $1} = $2;
   }
