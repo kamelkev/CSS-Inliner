@@ -234,7 +234,7 @@ sub inlinify {
 
   $self->_check_object();
 
-  $self->_content_warnings([]); # overwrite any existing warnings
+  $self->_content_warnings({}); # overwrite any existing warnings
 
   unless ($self->_html() && $self->_html_tree()) {
     croak "You must instantiate and read in your content before inlinifying";
@@ -246,9 +246,11 @@ sub inlinify {
 
     $self->_css()->read({css => $self->_stylesheet()});
 
-    my $content_warns = $self->_css()->content_warnings();
+    my @css_warnings = @{$self->_css()->content_warnings()};
 
-    $self->_content_warnings($content_warns);
+    my %content_warns = map { $_ => 1} @css_warnings;
+
+    $self->_content_warnings(\%content_warns);
 
     my %matched_elements;
     my $count = 0;
@@ -398,7 +400,9 @@ sub content_warnings {
 
   $self->_check_object();
 
-  return $self->_content_warnings();
+  my @content_warnings = keys %{$self->_content_warnings()};
+
+  return \@content_warnings;
 }
 
 ####################################################################
@@ -429,8 +433,7 @@ sub _report_warning {
   }
   else {
     my $warnings = $self->_content_warnings();
-    push @{$warnings}, $$params{info};
-    $self->_content_warnings($warnings);
+    $$warnings{$$params{info}} = 1;
   }
  
   return();

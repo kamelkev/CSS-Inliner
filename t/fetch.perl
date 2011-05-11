@@ -11,5 +11,10 @@ my $inliner = CSS::Inliner->new();
 $inliner->fetch_file({url => $url});
 my $inlined = $inliner->inlinify();
 
-use Data::Dumper;
-print Dumper($inliner->_content_warnings());
+print $inlined;
+
+warn "================ ERRORS ===============";
+foreach my $warning (@{$inliner->content_warnings}) {
+  warn $warning;
+}
+
