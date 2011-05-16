@@ -74,7 +74,7 @@
 	 - Beef up error reporting so you can tell which files are missing
 	 - Resolve dumb problem with tests whereby if a username had "t" in it the test failed
 
-xxxx	xxxx		Kevin Kamel <kamelkev@mailermailer.com>
+3213	2011-05-16		Kevin Kamel <kamelkev@mailermailer.com>
 	* Add new flag "warns_as_errors" which converts content warnings to errors if set
 	* Add public method content_warnings to return content warnings to end user
 	* Add getter/setter autogenerator for private data members
