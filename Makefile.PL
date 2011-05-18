@@ -12,9 +12,6 @@ WriteMakefile(
         'URI' => 0,
         'Test::More' => 0
     },
-    dist => {
-	PREOP => 'pod2text lib/CSS/Inliner.pm > README; ln -f README $(DISTVNAME)/README',
-    },
     'test' => {
 	TESTS => join(' ', map { glob } qw( t/*.t )),
     },
@@ -23,3 +20,12 @@ WriteMakefile(
     ABSTRACT => 'Library for converting CSS <style> blocks to inline styles',
     LICENSE => 'perl',
 );
+
+sub MY::postamble {
+  return <<'MAKE_FRAG';
+all :: README
+
+README: lib/CSS/Inliner.pm
+	pod2text $> > README
+MAKE_FRAG
+}
