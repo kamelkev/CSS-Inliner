@@ -13,7 +13,7 @@ WriteMakefile(
         'Test::More' => 0
     },
     dist => {
-	PREOP => 'pod2text lib/CSS/Inliner.pm > README',
+	PREOP => 'pod2text lib/CSS/Inliner.pm > README; cp README $(DISTVNAME)/README',
     },
     'test' => {
 	TESTS => join(' ', map { glob } qw( t/*.t )),
