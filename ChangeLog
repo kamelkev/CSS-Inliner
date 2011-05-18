@@ -80,3 +80,7 @@
 	* Add getter/setter autogenerator for private data members
 	* Add method _report_warning through which content warnings are aggregated or thrown 
 	* Add test linebreaktest.t to test for proper handling of linebreaks within inline styles
+
+3219	2011-05-18	Vivek Khera <vivek@mailermailer.com>
+	* MANIFEST was missing some entries
+	* Makefile.PL dependency on CSS::Simple updated, ensure README is included in dist file
