@@ -47,7 +47,7 @@ support top level <style> declarations.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','leave_style','warns_as_errors','content_warnings'];
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','leave_style','warns_as_errors','content_warnings', 'filter', 'unfilter'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -101,6 +101,8 @@ sub new {
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
     warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
+    filter => (defined($$params{filter}) && ref($$params{filter})) ? $$params{filter} : undef,
+    unfilter => (defined($$params{unfilter}) && ref($$params{unfilter})) ? $$params{unfilter} : undef,
   };
 
   bless $self, $class;
@@ -469,6 +471,7 @@ sub _fetch_url {
 
   # remove the <HTML> tag pair as parser will add it again.
   my $content = $res->content || ''; 
+
   $content =~ s|</?html>||gi;
 
   # Expand all URLs to absolute ones
@@ -484,6 +487,12 @@ sub _fetch_html {
 
   my ($content,$baseref) = $self->_fetch_url({ url => $$params{url} });
 
+  if ($self->_filter()) {
+    my $filter = $self->_filter();                                                                 
+
+    $content = &$filter({ content => $content });
+  }
+
   # Build the HTML tree
   my $doc = HTML::TreeBuilder->new();
   $doc->parse($content);
@@ -494,7 +503,14 @@ sub _fetch_html {
 
   $self->_expand_stylesheet({ content => $doc, html_baseref => $baseref });
 
-  return $doc->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+  my $html = $doc->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+
+  if ($self->_unfilter()) {
+    my $unfilter = $self->_unfilter();
+    $html = &$unfilter({ content => $content });
+  }
+
+  return $html;
 }
 
 sub _changelink_relative {
