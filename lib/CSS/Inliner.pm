@@ -489,7 +489,7 @@ sub _fetch_html {
   my ($content,$baseref) = $self->_fetch_url({ url => $$params{url} });
 
   if (my $post_fetch_filter = $self->_post_fetch_filter()) {
-    $content = &$post_fetch_filter({ content => $content });
+    $content = &$post_fetch_filter({ html => $content });
   }
 
   # Build the HTML tree
