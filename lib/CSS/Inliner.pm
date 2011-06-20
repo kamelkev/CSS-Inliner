@@ -47,7 +47,7 @@ support top level <style> declarations.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','leave_style','warns_as_errors','content_warnings', 'filter', 'unfilter'];
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','leave_style','warns_as_errors','content_warnings', 'post_fetch_filter'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -82,6 +82,8 @@ B<strip_attrs> (optional). Remove all "id" and "class" attributes during inlinin
 
 B<leave_style> (optional). Leave style/link tags alone within <head> during inlining
 
+B<post_fetch_filter> (optional). Execute a coderef filter on fetched content. Useful for protecting mailmerge tags while fetching. You are responsible for restoring any tags in your own code
+
 =back
 
 =cut
@@ -101,8 +103,7 @@ sub new {
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
     warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
-    filter => (defined($$params{filter}) && ref($$params{filter}) eq 'CODE') ? $$params{filter} : undef,
-    unfilter => (defined($$params{unfilter}) && ref($$params{unfilter}) eq 'CODE') ? $$params{unfilter} : undef,
+    post_fetch_filter => (defined($$params{post_fetch_filter}) && ref($$params{post_fetch_filter}) eq 'CODE') ? $$params{post_fetch_filter} : undef
   };
 
   bless $self, $class;
@@ -487,10 +488,9 @@ sub _fetch_html {
 
   my ($content,$baseref) = $self->_fetch_url({ url => $$params{url} });
 
-  if ($self->_filter()) {
-    my $filter = $self->_filter();
-
-    $content = &$filter({ content => $content });
+  if ($self->_post_fetch_filter()) {
+    my $post_fetch_filter = $self->_post_fetch_filter();
+    &$post_fetch_filter({ content => \$content });
   }
 
   # Build the HTML tree
@@ -504,11 +504,6 @@ sub _fetch_html {
   $self->_expand_stylesheet({ content => $doc, html_baseref => $baseref });
 
   my $html = $doc->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
-
-  if ($self->_unfilter()) {
-    my $unfilter = $self->_unfilter();
-    $html = &$unfilter({ content => $html });
-  }
 
   return $html;
 }

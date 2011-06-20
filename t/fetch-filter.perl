@@ -7,8 +7,7 @@ use CSS::Inliner;
 
 my $url = shift || 'http://www.cpan.org/index.html';
 
-my $inliner = CSS::Inliner->new({filter => \&filter, unfilter => \&unfilter});
-#my $inliner = CSS::Inliner->new();
+my $inliner = CSS::Inliner->new({ post_fetch_filter => \&post_fetch_filter });
 $inliner->fetch_file({url => $url});
 my $inlined = $inliner->inlinify();
 
@@ -21,14 +20,10 @@ foreach my $warning (@{$inliner->content_warnings}) {
   warn $warning;
 }
 
-sub filter { 
+sub post_fetch_filter { 
   my ($params) = @_;
 
-  return $$params{content};
-};
+  warn "execute filter";
 
-sub unfilter { 
-  my ($params) = @_;
-
-  return $$params{content};
+  return();
 };
