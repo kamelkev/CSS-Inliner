@@ -25,5 +25,5 @@ sub post_fetch_filter {
 
   warn "execute filter";
 
-  return();
+  return $$params{content};
 };
