@@ -101,8 +101,8 @@ sub new {
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
     warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
-    filter => (defined($$params{filter}) && ref($$params{filter})) ? $$params{filter} : undef,
-    unfilter => (defined($$params{unfilter}) && ref($$params{unfilter})) ? $$params{unfilter} : undef,
+    filter => (defined($$params{filter}) && ref($$params{filter}) eq 'CODE') ? $$params{filter} : undef,
+    unfilter => (defined($$params{unfilter}) && ref($$params{unfilter}) eq 'CODE') ? $$params{unfilter} : undef,
   };
 
   bless $self, $class;
@@ -488,7 +488,7 @@ sub _fetch_html {
   my ($content,$baseref) = $self->_fetch_url({ url => $$params{url} });
 
   if ($self->_filter()) {
-    my $filter = $self->_filter();                                                                 
+    my $filter = $self->_filter();
 
     $content = &$filter({ content => $content });
   }
@@ -507,7 +507,7 @@ sub _fetch_html {
 
   if ($self->_unfilter()) {
     my $unfilter = $self->_unfilter();
-    $html = &$unfilter({ content => $content });
+    $html = &$unfilter({ content => $html });
   }
 
   return $html;
