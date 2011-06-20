@@ -84,3 +84,8 @@
 3219	2011-05-18	Vivek Khera <vivek@mailermailer.com>
 	* MANIFEST was missing some entries
 	* Makefile.PL dependency on CSS::Simple updated, ensure README is included in dist file
+
+3271	2011-06-19	Kevin Kamel <kamelkev@mailermailer.com>
+	* Include post_fetch_filter constructor parameter. Allows users to protect mailmerge tags
+	* Include example for new feature under t/fetch-filter.t
+	* Update MANIFEST with example
