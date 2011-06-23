@@ -89,3 +89,7 @@
 	* Include post_fetch_filter constructor parameter. Allows users to protect mailmerge tags
 	* Include example for new feature under t/fetch-filter.t
 	* Update MANIFEST with example
+
+xxxx	2011-06-23	Kevin Kamel <kamelkev@mailermailer.com>
+	* Include test contribution from Ron Straight (quinnfazigu@gmail.org)
+	  - replace regex for test directory with proper mechanism for determining path

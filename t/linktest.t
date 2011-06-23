@@ -6,9 +6,11 @@ use Test::More;
 use Cwd;
 use CSS::Inliner;
 
+use FindBin qw($Bin);
+
 plan(tests => 1);
 
-my $html_path = (getcwd =~ m/t$/) ? getcwd . '/html/' : getcwd . '/t/html/';
+my $html_path = "$Bin/html/";
 my $test_file = $html_path . 'linktest.html';
 my $result_file = $html_path . 'linktest_result.html';
 
