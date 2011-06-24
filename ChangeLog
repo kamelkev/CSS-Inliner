@@ -90,7 +90,7 @@
 	* Include example for new feature under t/fetch-filter.t
 	* Update MANIFEST with example
 
-xxxx	2011-06-23	Kevin Kamel <kamelkev@mailermailer.com>
+3283	2011-06-23	Kevin Kamel <kamelkev@mailermailer.com>
 	* Include test contribution from Ron Straight (quinnfazigu@gmail.org)
 	  - replace regex for test directory with proper mechanism for determining path
 	* Alter the user-agent used for remote fetching
