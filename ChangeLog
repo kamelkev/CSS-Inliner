@@ -93,3 +93,5 @@
 xxxx	2011-06-23	Kevin Kamel <kamelkev@mailermailer.com>
 	* Include test contribution from Ron Straight (quinnfazigu@gmail.org)
 	  - replace regex for test directory with proper mechanism for determining path
+	* Alter the user-agent used for remote fetching
+	  - follow "curl" recommendation to use Mozilla/4.0 for maximim compatability
