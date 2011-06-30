@@ -95,3 +95,13 @@
 	  - replace regex for test directory with proper mechanism for determining path
 	* Alter the user-agent used for remote fetching
 	  - follow "curl" recommendation to use Mozilla/4.0 for maximim compatability
+
+xxxx	2011-06-30	Kevin Kamel <kamelkev@mailermailer.com>
+	* Replace CSS::Simple CPAN module with a new CSS encapsulation module specific for inlining.
+	  - CSS::Inliner::Parser drops the Tie::IxHash in favor of a an array of hashes which
+	    lends itself very nicely to rules that are repeated - something that the previous version
+	    of the module could not handle properly due to the data structure.
+	  - Create tests through which to test out CSS::Inliner::Parser
+	  - Update MANIFEST with new module and associated tests
+	* Update Inliner code to utilize new Parser submodule
+	  - Add test "basic-redeclare" to ensure that the repeated rule bug is solved

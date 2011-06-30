@@ -1,5 +1,6 @@
 ChangeLog
 lib/CSS/Inliner.pm
+lib/CSS/Inliner/Parser.pm
 MANIFEST
 Makefile.PL
 README
@@ -23,5 +24,9 @@ t/html/linktest_result.html
 t/linebreaktest.t
 t/linktest.t
 t/ordering.t
+t/Parser/create.t
+t/Parser/fail.t
+t/Parser/basic.t
+t/Parser/hacks.t
 t/pod.t
 t/specificity.t

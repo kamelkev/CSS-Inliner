@@ -16,10 +16,11 @@ $VERSION = sprintf "%d", q$Revision$ =~ /(\d+)/;
 use Carp;
 
 use HTML::TreeBuilder;
-use CSS::Simple;
 use HTML::Query 'query';
 use LWP::UserAgent;
 use URI;
+
+use CSS::Inliner::Parser;
 
 =pod
 
@@ -95,7 +96,7 @@ sub new {
 
   my $self = {
     stylesheet => undef,
-    css => CSS::Simple->new({ warns_as_errors => $$params{warns_as_errors}}),
+    css => CSS::Inliner::Parser->new({ warns_as_errors => $$params{warns_as_errors}}),
     html => undef,
     html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
     query => undef,
@@ -258,17 +259,20 @@ sub inlinify {
     my %matched_elements;
     my $count = 0;
 
-    foreach my $key ($self->_css()->get_selectors()) {
+    foreach my $entry (@{$self->_css()->get_entries()}) {
+
+      my $selector = $$entry{selector};
+      my $properties = $$entry{properties};
 
       #skip over psuedo selectors, they are not mappable the same
-      if ($key =~ /[\w\*]:(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter|first-child|first-child))\b/io) {
+      if ($selector =~ /[\w\*]:(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter|first-child|first-child))\b/io) {
         $self->_report_warning({ info => "The pseudo-class ':$1' cannot be supported inline" });
         next; 
       }
 
       #skip over @import or anything else that might start with @ - not inlineable
-      if ($key =~ /^\@/io) {
-        $self->_report_warning({ info => "The directive '$key' cannot be supported inline" });
+      if ($selector =~ /^\@/io) {
+        $self->_report_warning({ info => "The directive '$selector' cannot be supported inline" });
         next;
       }
 
@@ -276,7 +280,7 @@ sub inlinify {
 
       #check to see if query fails, possible for jacked selectors
       eval { 
-        $query_result = $self->query({ selector => $key });
+        $query_result = $self->query({ selector => $selector });
       }; 
 
       if ($@) {
@@ -285,7 +289,7 @@ sub inlinify {
       }
 
       # CSS rules cascade based on the specificity and order
-      my $specificity = $self->specificity({selector => $key});
+      my $specificity = $self->specificity({selector => $selector});
 
       #if an element matched a style within the document store the rule, the specificity
       #and the actually CSS attributes so we can inline it later
@@ -293,11 +297,11 @@ sub inlinify {
 
        $matched_elements{$element->address()} ||= [];
         my %match_info = (
-          rule     => $key,
+          rule     => $selector,
           element  => $element,
           specificity   => $specificity,
           position => $count,
-          css      => $self->_css()->get_properties({selector => $key}),
+          css      => $properties
          );
   
         push(@{$matched_elements{$element->address()}}, \%match_info);
