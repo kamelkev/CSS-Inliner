@@ -218,7 +218,7 @@ sub read {
       foreach my $selector (@selectors) {
         $selector =~ s/^\s+|\s+$//g;
 
-        $self->add_selector({selector => $selector, properties => $properties});
+        $self->add_entry({selector => $selector, properties => $properties});
       }
     }
   }
@@ -348,11 +348,11 @@ Add an entry containing a selector and associated properties to the stored rules
 This method requires you to pass in a params hash that contains scalar
 css data. For example:
 
-$self->add_selector({selector => '.foo', properties => {color => 'red' }});
+$self->add_entry({selector => '.foo', properties => {color => 'red' }});
 
 =cut
 
-sub add_selector {
+sub add_entry {
   my ($self,$params) = @_;
 
   $self->_check_object();
