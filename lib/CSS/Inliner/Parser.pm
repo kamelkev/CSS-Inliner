@@ -401,6 +401,8 @@ sub _report_warning {
 
 =pod
 
+=back
+
 =head1 Sponsor
 
 This code has been developed under sponsorship of MailerMailer LLC, http://www.mailermailer.com/
