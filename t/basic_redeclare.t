@@ -21,12 +21,12 @@ my $html = <<END;
       color: #1e00ff;
     }
     .selector1 {
-      font-style: bold;
+      font-weight: bold;
     }
   </style>
  </head>
  <body>
-  <div class="selector1 selector2" style="color: #1e00ff;font-style: bold;">
+  <div class="selector1 selector2" style="color: #1e00ff;font-weight: bold;">
     Example Text    
   </div>
  </body>
@@ -37,7 +37,7 @@ my $correct_result = <<'END';
 <html>
  <head> </head>
  <body>
-  <div style="color: #1e00ff; font-style: bold;"> Example Text </div> </body>   </html>
+  <div style="color: #1e00ff; font-weight: bold;"> Example Text </div> </body>   </html>
 END
 
 my $inliner = CSS::Inliner->new({strip_attrs => 1});
