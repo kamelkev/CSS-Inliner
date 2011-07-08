@@ -96,7 +96,7 @@
 	* Alter the user-agent used for remote fetching
 	  - follow "curl" recommendation to use Mozilla/4.0 for maximim compatability
 
-xxxx	2011-06-30	Kevin Kamel <kamelkev@mailermailer.com>
+3292	2011-06-30	Kevin Kamel <kamelkev@mailermailer.com>
 	* Replace CSS::Simple CPAN module with a new CSS encapsulation module specific for inlining.
 	  - CSS::Inliner::Parser drops the Tie::IxHash in favor of a an array of hashes which
 	    lends itself very nicely to rules that are repeated - something that the previous version
