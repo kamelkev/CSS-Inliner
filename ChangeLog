@@ -105,3 +105,7 @@
 	  - Update MANIFEST with new module and associated tests
 	* Update Inliner code to utilize new Parser submodule
 	  - Add test "basic-redeclare" to ensure that the repeated rule bug is solved
+
+3295	2011-07-08	Vick Khera <vivek@mailermailer.com>
+	* Makefile.PL remove dependency on CSS::Simple missed in prior
+	release
