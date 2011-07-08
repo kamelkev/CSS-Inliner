@@ -125,7 +125,7 @@ Fetches a remote HTML file that supposedly contains both HTML and a
 style declaration. It subsequently calls the read() method
 automatically.
 
-This method expands all relative urls, as well as fully expands the 
+This method expands all relative urls, as well as fully expands the
 stylesheet reference within the document.
 
 This method requires you to pass in a params hash that contains a
@@ -267,7 +267,7 @@ sub inlinify {
       #skip over psuedo selectors, they are not mappable the same
       if ($selector =~ /[\w\*]:(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter|first-child|first-child))\b/io) {
         $self->_report_warning({ info => "The pseudo-class ':$1' cannot be supported inline" });
-        next; 
+        next;
       }
 
       #skip over @import or anything else that might start with @ - not inlineable
@@ -279,13 +279,13 @@ sub inlinify {
       my $query_result;
 
       #check to see if query fails, possible for jacked selectors
-      eval { 
+      eval {
         $query_result = $self->query({ selector => $selector });
-      }; 
+      };
 
       if ($@) {
         $self->_report_warning({ info => $@->info() });
-        next; 
+        next;
       }
 
       # CSS rules cascade based on the specificity and order
@@ -303,7 +303,7 @@ sub inlinify {
           position => $count,
           css      => $properties
          );
-  
+
         push(@{$matched_elements{$element->address()}}, \%match_info);
         $count++;
       }
@@ -390,14 +390,14 @@ sub specificity {
 }
 
 =pod
-   
+
 =item content_warnings()
-  
+
 Return back any warnings thrown while inlining a given block of content.
 
 Note: content warnings are initialized at inlining time, not at read time. In
 order to receive back content feedback you must perform inlinify() first
-  
+
 =back
 
 =cut
@@ -442,7 +442,7 @@ sub _report_warning {
     my $warnings = $self->_content_warnings();
     $$warnings{$$params{info}} = 1;
   }
- 
+
   return();
 }
 
@@ -456,7 +456,7 @@ sub _fetch_url {
   $ua->agent("Mozilla/4.0" . $ua->agent); # masquerade as Mozilla/4.0
   $ua->protocols_allowed( ['http','https'] );
 
-  # Create a request     
+  # Create a request
   my $uri = URI->new($$params{url});
 
   my $req = HTTP::Request->new('GET',$uri);
@@ -475,7 +475,7 @@ sub _fetch_url {
   }
 
   # remove the <HTML> tag pair as parser will add it again.
-  my $content = $res->content || ''; 
+  my $content = $res->content || '';
 
   $content =~ s|</?html>||gi;
 
@@ -517,13 +517,13 @@ sub _changelink_relative {
   $self->_check_object();
 
   my $base = $$params{baseref};
-  
+
   foreach my $i (@{$$params{content}}) {
-  
+
     next unless ref $i eq 'HTML::Element';
-  
+
     if ($i->tag eq 'img' or $i->tag eq 'frame' or $i->tag eq 'input' or $i->tag eq 'script') {
-  
+
       if ($i->attr('src') and $base) {
         # Construct a uri object for the attribute 'src' value
         my $uri = URI->new($i->attr('src'));
@@ -563,7 +563,7 @@ sub __fix_relative_url {
   $self->_check_object();
 
   my $uri = URI->new($$params{url});
-  
+
   return $$params{prefix} . "'" . $uri->abs($$params{base})->as_string ."'";
 }
 
@@ -589,7 +589,7 @@ sub _expand_stylesheet {
   foreach my $i (@link) {
     my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
 
-    #absolutized the assetts within the stylesheet that are relative 
+    #absolutized the assetts within the stylesheet that are relative
     $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({prefix => $1, url => $2, base => $baseref})/exsgi;
 
     my $stylesheet = HTML::Element->new('style', type => "text/css", rel=> "stylesheet");
@@ -601,10 +601,10 @@ sub _expand_stylesheet {
   foreach my $i (@style) {
     #use the baseref from the original document fetch
     my $baseref = $$params{html_baseref};
-  
+
     my $content = $i->content();
 
-    #absolutized the assetts within the stylesheet that are relative 
+    #absolutized the assetts within the stylesheet that are relative
     $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({prefix => $1, url => $2, base => $baseref})/exsgi;
 
     my $stylesheet = HTML::Element->new('style');
@@ -628,7 +628,7 @@ sub _parse_stylesheet {
 
   #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
   my @style = $head->look_down('_tag','style','type','text/css');
- 
+
   #get the <link> nodes underneath the head section - there should be *none* at this step in the process
   my @link = $head->look_down('_tag','link','rel','stylesheet','type','text/css');
 
@@ -685,7 +685,7 @@ sub _collapse_inline_styles {
       }
 
       $collapsed_style =~ s/\s*$//;
-      $i->attr('style', $collapsed_style); 
+      $i->attr('style', $collapsed_style);
     }
 
     #if we have specifically asked to remove the inlined attrs, remove them
