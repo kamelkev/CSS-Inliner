@@ -736,7 +736,7 @@ sub _split {
   # Split into properties
   foreach ( grep { /\S/ } split /\;/, $style ) {
     unless ( /^\s*([\w._-]+)\s*:\s*(.*?)\s*$/ ) {
-      $self->_report_warning({ info => "aInvalid or unexpected property '$_' in style '$style'"});
+      $self->_report_warning({ info => "Invalid or unexpected property '$_' in style '$style'"});
     }
     $split{lc $1} = $2;
   }
