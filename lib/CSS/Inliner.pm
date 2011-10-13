@@ -1,9 +1,6 @@
 # $Id$
 #
 # Copyright 2011 MailerMailer, LLC - http://www.mailermailer.com
-#
-# Based loosely on the TamTam RubyForge project:
-# http://tamtam.rubyforge.org/
 
 package CSS::Inliner;
 
@@ -764,7 +761,7 @@ Michael Peters <C<wonko@cpan.org>>
 
 =head1 LICENSE
 
-This module is Copyright 2010 Khera Communications, Inc.  It is
+This module is Copyright 2011 Khera Communications, Inc.  It is
 licensed under the same terms as Perl itself.
 
 =cut
