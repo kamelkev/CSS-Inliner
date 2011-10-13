@@ -5,7 +5,7 @@ WriteMakefile(
     NAME => 'CSS::Inliner',
     PMLIBDIRS => [ 'lib' ],
     PREREQ_PM => {
-	'HTML::TreeBuilder' => 0,
+	'HTML::TreeBuilder' => 4.2,
         'HTML::Query' => 0.07,
         'LWP' => 0,
         'URI' => 0,
