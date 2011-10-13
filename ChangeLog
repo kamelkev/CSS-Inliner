@@ -114,3 +114,8 @@
 	* Fix a typo in the inlined warning array
 	* Attempt to resolve agent fetching issue
 	  - Update agent to prefix "Mozilla/4.0" to work with older cgis
+
+3385	2011-10-13	Kevin Kamel <kamelkev@mailermailer.com>
+	* Fix up Makefile to include dependency for TreeBuilder version 4.2
+	* Update copyright in Inliner.pm
+
