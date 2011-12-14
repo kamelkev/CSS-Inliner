@@ -450,7 +450,7 @@ sub _fetch_url {
 
   # Create a user agent object
   my $ua = LWP::UserAgent->new;
-  $ua->agent("Mozilla/4.0 (" . $ua->agent .")"); # masquerade as Mozilla/4.0
+  $ua->agent("Mozilla/4.0"); # masquerade as Mozilla/4.0
   $ua->protocols_allowed( ['http','https'] );
 
   # Create a request
