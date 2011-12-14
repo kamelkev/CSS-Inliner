@@ -119,3 +119,6 @@
 	* Fix up Makefile to include dependency for TreeBuilder version 4.2
 	* Update copyright in Inliner.pm
 
+3471	2011-12-14	Kevin Kamel <kamelkev@mailermailer.com>
+	* Attempt to resolve agent fetching issue
+	  - Update agent to be solely string "Mozilla/4.0"
