@@ -17,6 +17,8 @@ use HTML::Query 'query';
 use LWP::UserAgent;
 use URI;
 
+use Encode;
+
 use CSS::Inliner::Parser;
 
 =pod
@@ -119,8 +121,9 @@ sub new {
 =item fetch_file( params )
 
 Fetches a remote HTML file that supposedly contains both HTML and a
-style declaration. It subsequently calls the read() method
-automatically.
+style declaration, properly tags the data with the proper characterset
+as provided by the remote webserver (if any). Subsequently calls the
+read() method automatically.
 
 This method expands all relative urls, as well as fully expands the
 stylesheet reference within the document.
@@ -160,6 +163,11 @@ filename argument. For example:
 
 $self->read_file({filename => 'myfile.html'});
 
+Additionally you can specify the character encoding within the file, for
+example:
+
+$self->read_file({filename => 'myfile.html', charset => 'utf8'});
+
 =cut
 
 sub read_file {
@@ -172,7 +180,15 @@ sub read_file {
   }
 
   open FILE, "<", $$params{filename} or die $!;
-  my $html = do { local( $/ ) ; <FILE> } ;
+  my $content = do { local( $/ ) ; <FILE> } ;
+
+  my $html;
+  if (defined($$params{charset}) && $$params{charset} && find_encoding($$params{charset}) ) {
+    $html = decode($$params{charset}, $content);
+  }
+  else {
+    $html = $content; # best we can do, no encoding specified
+  }
 
   $self->read({html => $html});
 
@@ -183,7 +199,7 @@ sub read_file {
 
 =item read( params )
 
-Reads html data and parses it.  The intermediate data is stored in
+Reads passed html data and parses it.  The intermediate data is stored in
 class variables.
 
 The <style> block is ripped out of the html here, and stored
@@ -193,6 +209,10 @@ This method requires you to pass in a params hash that contains scalar
 html data. For example:
 
 $self->read({html => $html});
+
+NOTE: You are required to pass a properly encoded perl reference to the
+html data. This method does *not* do the dirty work of encoding the html
+as utf8 - do that before calling this method.
 
 =cut
 
@@ -471,9 +491,15 @@ sub _fetch_url {
     die 'The web site address you entered is not an HTML document.';
   }
 
-  # remove the <HTML> tag pair as parser will add it again.
-  my $content = $res->content || '';
+  my $content;
+  if ($res->content_type_charset && find_encoding($res->content_type_charset)->name) {
+    $content = decode($res->content_type_charset, $res->content || '');
+  }
+  else {
+    $content = $res->content || ''; # best we can do, no encoding given
+  }
 
+  # remove the <HTML> tag pair as parser will add it again.
   $content =~ s|</?html>||gi;
 
   # Expand all URLs to absolute ones
