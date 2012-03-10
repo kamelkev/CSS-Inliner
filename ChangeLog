@@ -122,3 +122,8 @@
 3471	2011-12-14	Kevin Kamel <kamelkev@mailermailer.com>
 	* Attempt to resolve agent fetching issue
 	  - Update agent to be solely string "Mozilla/4.0"
+
+3671	2012-03-09	Kevin Kamel <kamelkev@mailermailer.com>
+	* Add in support for character encodings for content to be inlined
+	  - fixes bugs whereby foreign content types (utf8) produced bad inlined documents
+	* Fix errors in output of some test files
