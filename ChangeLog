@@ -127,3 +127,6 @@
 	* Add in support for character encodings for content to be inlined
 	  - fixes bugs whereby foreign content types (utf8) produced bad inlined documents
 	* Fix errors in output of some test files
+
+3674	2012-03-12	Kevin Kamel <kamelkev@mailermailer.com>
+	* Skip processing of link tags without an href, no reason to process them
