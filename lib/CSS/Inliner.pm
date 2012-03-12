@@ -605,7 +605,7 @@ sub _expand_stylesheet {
   my @style = $head->look_down('_tag','style','href',qr/^https?:\/\//);
 
   #get the <link> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @link = $head->look_down('_tag','link','rel','stylesheet');
+  my @link = $head->look_down('_tag','link','rel','stylesheet','href',qr/./);
 
   my @stylesheets = (@style,@link);
 
@@ -653,7 +653,7 @@ sub _parse_stylesheet {
   my @style = $head->look_down('_tag','style','type','text/css');
 
   #get the <link> nodes underneath the head section - there should be *none* at this step in the process
-  my @link = $head->look_down('_tag','link','rel','stylesheet','type','text/css');
+  my @link = $head->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
 
   if (scalar @link) {
     die 'Inliner only supports link tags if you fetch the document from a remote source';
