@@ -25,6 +25,7 @@ t/html/linktest_result.html
 t/linebreaktest.t
 t/linktest.t
 t/ordering.t
+t/psuedo.t
 t/Parser/create.t
 t/Parser/fail.t
 t/Parser/basic.t
