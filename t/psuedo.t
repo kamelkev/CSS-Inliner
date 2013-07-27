@@ -11,7 +11,8 @@ plan(tests => 3);
 use_ok('CSS::Inliner');
 
 local $SIG{__WARN__} = sub {
-  die; # map any warnings here to a fatal
+  my $message = shift;
+  die $message; # map any warnings here to a fatal
 };
 
 my $html1 = <<END;
