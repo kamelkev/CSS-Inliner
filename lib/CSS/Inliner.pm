@@ -1,14 +1,10 @@
-# $Id$
-#
-# Copyright 2011 MailerMailer, LLC - http://www.mailermailer.com
-
 package CSS::Inliner;
 
 use strict;
 use warnings;
 
 use vars qw($VERSION);
-$VERSION = sprintf "%d", q$Revision$ =~ /(\d+)/;
+$VERSION = 5;
 
 use Carp;
 
@@ -279,7 +275,7 @@ sub inlinify {
       my $properties = $$entry{properties};
 
       #skip over psuedo selectors, they are not mappable the same
-      if ($selector =~ /[\w\*]:(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter|first-child|first-child))\b/io) {
+      if ($selector =~ /(?:^|[\w\*]):(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter|first-child|first-child))\b/io) {
         $self->_report_warning({ info => "The pseudo-class ':$1' cannot be supported inline" });
         next;
       }
