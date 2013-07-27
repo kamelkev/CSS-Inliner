@@ -6,7 +6,7 @@ WriteMakefile(
     PMLIBDIRS => [ 'lib' ],
     PREREQ_PM => {
 	'HTML::TreeBuilder' => 4.2,
-        'HTML::Query' => 0.07,
+        'HTML::Query' => 0.08,
         'LWP' => 0,
         'URI' => 0,
         'Test::More' => 0
