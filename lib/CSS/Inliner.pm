@@ -3,9 +3,6 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-use vars qw($VERSION);
-$VERSION = 5;
-
 use Carp;
 
 use HTML::TreeBuilder;

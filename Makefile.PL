@@ -1,4 +1,3 @@
-# $Id$
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
@@ -14,7 +13,7 @@ WriteMakefile(
     'test' => {
 	TESTS => join(' ', map { glob } qw( t/*.t )),
     },
-    VERSION_FROM => 'lib/CSS/Inliner.pm',
+    VERSION => 3674,
     AUTHOR => 'Kevin Kamel <kamelkev@mailermailer.com>',
     ABSTRACT => 'Library for converting CSS <style> blocks to inline styles',
     LICENSE => 'perl',
