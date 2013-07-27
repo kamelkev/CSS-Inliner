@@ -130,3 +130,11 @@
 
 3674	2012-03-12	Kevin Kamel <kamelkev@mailermailer.com>
 	* Skip processing of link tags without an href, no reason to process them
+
+3901	2013-07-27	Kevin Kamel <kamelkev@mailermailer.com>
+	* Remove "post_fetch_filter", I know of nobody using this feature and I personally do not need it anymore
+	* Added patch from Sebastian Paaske Torholm <spt@jobindex.dk>
+		- Update psuedo class support to reject rules without leading content before :psuedo
+		- Update psuedo class support to allow :first-child and :last-child to propogate to HTML::Query
+	* Update documentation where appropriate
+	* Transition versioning to a new model
