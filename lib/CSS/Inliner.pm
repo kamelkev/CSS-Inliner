@@ -274,8 +274,8 @@ sub inlinify {
       my $selector = $$entry{selector};
       my $properties = $$entry{properties};
 
-      #skip over psuedo selectors, they are not mappable the same
-      if ($selector =~ /(?:^|[\w\*]):(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter|first-child|first-child))\b/io) {
+      #skip over the following psuedo selectors, these particular ones are not inlineable
+      if ($selector =~ /(?:^|[\w\*]):(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter))\b/io) {
         $self->_report_warning({ info => "The pseudo-class ':$1' cannot be supported inline" });
         next;
       }
