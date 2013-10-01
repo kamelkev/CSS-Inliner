@@ -507,6 +507,7 @@ sub _fetch_html {
 
   # Build the HTML tree
   my $doc = HTML::TreeBuilder->new();
+  $doc->store_comments(1);
   $doc->parse($content);
   $doc->eof;
 
