@@ -139,9 +139,10 @@
 	* Update documentation where appropriate
 	* Transition versioning to a new model
 
-3911	2013-10-01	Kevin Kamel <kamelkev@mailermailer.com>
+3912	2013-10-01	Kevin Kamel <kamelkev@mailermailer.com>
 	* Accept pull request from Vivek Khera (http://github.com/khera)
 		- Resolve issue whereby html comments were lost
 		- Resolve issue whereby url() references within local <style> css were not absolutized
 		- Add test for url() fix
 	* Add explicit test to confirm that pull request patch does in fact retain comments
+	* Fix versioning issues

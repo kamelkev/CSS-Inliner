@@ -1,5 +1,3 @@
-# $Id: Simpler.pm -1   $
-#
 # Copyright 2011 MailerMailer, LLC - http://www.mailermailer.com
 #
 # Based in large part on the CSS::Tiny CPAN Module
@@ -14,9 +12,6 @@ package CSS::Inliner::Parser;
 
 use strict;
 use warnings;
-
-use vars qw($VERSION);
-$VERSION = sprintf "%d", q$Revision: -1 $ =~ /(\d+)/;
 
 use Carp;
 
