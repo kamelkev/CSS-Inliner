@@ -13,7 +13,7 @@ WriteMakefile(
     'test' => {
 	TESTS => join(' ', map { glob } qw( t/*.t )),
     },
-    VERSION => 3912,
+    VERSION_FROM => 'lib/CSS/Inliner.pm',
     AUTHOR => 'Kevin Kamel <kamelkev@mailermailer.com>',
     ABSTRACT => 'Library for converting CSS <style> blocks to inline styles',
     LICENSE => 'perl',

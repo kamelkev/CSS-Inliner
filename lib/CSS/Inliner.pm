@@ -1,7 +1,8 @@
 package CSS::Inliner;
-
 use strict;
 use warnings;
+
+our $VERSION = '3913';
 
 use Carp;
 
