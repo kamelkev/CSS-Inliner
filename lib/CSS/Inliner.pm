@@ -507,6 +507,7 @@ sub _fetch_html {
 
   # Build the HTML tree
   my $doc = HTML::TreeBuilder->new();
+  $doc->store_comments(1);
   $doc->parse($content);
   $doc->eof;
 
@@ -588,12 +589,10 @@ sub _expand_stylesheet {
   my $head = $doc->look_down("_tag", "head"); # there should only be one
 
   #get the external <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @style = $head->look_down('_tag','style','href',qr/^https?:\/\//);
+  my @style = $head->look_down('_tag','style');
 
   #get the <link> nodes underneath the head section - that's the only place stylesheets are allowed to live
   my @link = $head->look_down('_tag','link','rel','stylesheet','href',qr/./);
-
-  my @stylesheets = (@style,@link);
 
   foreach my $i (@link) {
     my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
@@ -611,15 +610,17 @@ sub _expand_stylesheet {
     #use the baseref from the original document fetch
     my $baseref = $$params{html_baseref};
 
-    my $content = $i->content();
+    my @content = $i->content_list();
+    my $content = join('',grep {! ref $_ } @content);
 
-    #absolutized the assetts within the stylesheet that are relative
+    # absolutize the assets within the stylesheet that are relative
     $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({prefix => $1, url => $2, base => $baseref})/exsgi;
 
-    my $stylesheet = HTML::Element->new('style');
+    my $stylesheet = HTML::Element->new('style', type => "text/css", rel=> "stylesheet");
     $stylesheet->push_content($content);
 
     $i->replace_with($stylesheet);
+
   }
 
   return();
