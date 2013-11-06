@@ -35,9 +35,12 @@ END
 
 my $correct_result = <<'END';
 <html>
- <head> </head>
+ <head>
+ </head>
  <body>
-  <div style="color: #1e00ff; font-weight: bold;"> Example Text </div> </body>   </html>
+  <div style="color: #1e00ff; font-weight: bold;"> Example Text </div>
+ </body>
+</html>
 END
 
 my $inliner = CSS::Inliner->new({strip_attrs => 1});

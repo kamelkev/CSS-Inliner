@@ -1,11 +1,11 @@
 #!/usr/bin/perl -w
-
 use strict;
 use warnings;
+use lib qw( ./lib ../lib );
 
 use Test::More;
 
-BEGIN { use_ok( 'CSS::Inliner' ); }
+use_ok( 'CSS::Inliner' );
 
 my $inliner = new CSS::Inliner();
 

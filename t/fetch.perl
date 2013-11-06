@@ -7,9 +7,9 @@ use CSS::Inliner;
 
 my $url = shift || 'http://www.cpan.org/index.html';
 
-my $inliner = CSS::Inliner->new();
+my $inliner = CSS::Inliner->new({ relaxed => 1 });
 $inliner->fetch_file({url => $url});
-my $inlined = $inliner->inlinify();
+my $inlined = $inliner->inlinify({ relaxed => 1 });
 
 print $inlined;
 

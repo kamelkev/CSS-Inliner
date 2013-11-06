@@ -27,7 +27,7 @@ my $html = <<END;
 </html>
 END
 
-my $inliner = CSS::Inliner->new();
+my $inliner = CSS::Inliner->new({ relaxed => 1 });
 $inliner->read({html => $html});
 my $inlined = $inliner->inlinify();
 
