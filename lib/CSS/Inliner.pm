@@ -6,13 +6,13 @@ our $VERSION = '3913';
 
 use Carp;
 
-use HTML::TreeBuilder;
-use HTML::Query 'query';
+use Encode;
 use LWP::UserAgent;
 use URI;
 
-use Encode;
+use HTML::Query 'query';
 
+use CSS::Inliner::TreeBuilder;
 use CSS::Inliner::Parser;
 
 =pod
@@ -41,7 +41,7 @@ support top level <style> declarations.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','leave_style','warns_as_errors','content_warnings'];
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -70,11 +70,15 @@ BEGIN {
 Instantiates the Inliner object. Sets up class variables that are used
 during file parsing/processing. Possible options are:
 
-B<html_tree> (optional). Pass in a custom instance of HTML::Treebuilder
+B<html_tree> (optional). Pass in a fresh unparsed instance of CSS::Inliner::TreeBuilder or HTML::Treebuilder.
+
+NOTE: Any passed references to HTML::TreeBuilder will be substantially altered by passing it in here...
 
 B<strip_attrs> (optional). Remove all "id" and "class" attributes during inlining
 
 B<leave_style> (optional). Leave style/link tags alone within <head> during inlining
+
+B<relaxed> (optional). Relaxed HTML parsing which will attempt to interpret broken HTML. Required for HTML5 documents.
 
 =back
 
@@ -85,19 +89,35 @@ sub new {
 
   my $class = ref($proto) || $proto;
 
+  my $html_tree;
+  if ($$params{html_tree}) {
+    if (ref $$params{html_tree} eq 'HTML::TreeBuilder') {
+      $html_tree = $$params{html_tree};
+      bless $html_tree, 'CSS::Inliner::TreeBuilder';
+    }
+    elsif (ref $$params{html_tree} eq 'CSS::Inliner::TreeBuilder') {
+      $html_tree = $$params{html_tree};
+    }
+    else {
+      croak 'Incompatible argument passed to new: "html_tree"';
+    }
+  }
+
   my $self = {
     stylesheet => undef,
     css => CSS::Inliner::Parser->new({ warns_as_errors => $$params{warns_as_errors}}),
     html => undef,
-    html_tree => $$params{html_tree} || HTML::TreeBuilder->new(),
+    html_tree => defined($html_tree) ? $html_tree : CSS::Inliner::TreeBuilder->new(),
     query => undef,
     content_warnings => undef,
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
+    relaxed => (defined($$params{relaxed}) && $$params{relaxed}) ? 1 : 0,
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
     warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
   };
 
   bless $self, $class;
+
   return $self;
 }
 
@@ -216,8 +236,12 @@ sub read {
     croak "You must pass in hash params that contains html data";
   }
 
-  $self->_html_tree()->store_comments(1);
-  $self->_html_tree()->parse($$params{html});
+  $self->_html_tree->store_comments(1);
+  if ($self->_relaxed()) {
+    $self->_html_tree->ignore_unknown(0);
+    $self->_html_tree->implicit_tags(0);
+  }
+  $self->_html_tree->parse_content($$params{html});
 
   $self->_init_query();
 
@@ -507,10 +531,13 @@ sub _fetch_html {
   my ($content,$baseref) = $self->_fetch_url({ url => $$params{url} });
 
   # Build the HTML tree
-  my $doc = HTML::TreeBuilder->new();
+  my $doc = CSS::Inliner::TreeBuilder->new();
   $doc->store_comments(1);
-  $doc->parse($content);
-  $doc->eof;
+  if ($self->_relaxed()) {
+    $doc->ignore_unknown(0);
+    $doc->implicit_tags(0);
+  }
+  $doc->parse_content($content);
 
   # Change relative links to absolute links
   $self->_changelink_relative({ content => $doc->content, baseref => $baseref});
@@ -587,13 +614,24 @@ sub _expand_stylesheet {
 
   my $stylesheets = ();
 
-  my $head = $doc->look_down("_tag", "head"); # there should only be one
+  my (@style,@link);
+  if ($self->_relaxed()) {
+    #get the <style> nodes
+    @style = $doc->look_down('_tag','style','type','text/css');
 
-  #get the external <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @style = $head->look_down('_tag','style');
+    #get the <link> nodes
+    @link = $doc->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
+  }
+  else {
+    #get the head section of the document
+    my $head = $doc->look_down("_tag", "head"); # there should only be one
 
-  #get the <link> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @link = $head->look_down('_tag','link','rel','stylesheet','href',qr/./);
+    #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
+    @style = $head->look_down('_tag','style','type','text/css');
+
+    #get the <link> nodes underneath the head section - there should be *none* at this step in the process
+    @link = $head->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
+  }
 
   foreach my $i (@link) {
     my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
@@ -621,7 +659,6 @@ sub _expand_stylesheet {
     $stylesheet->push_content($content);
 
     $i->replace_with($stylesheet);
-
   }
 
   return();
@@ -634,14 +671,24 @@ sub _parse_stylesheet {
 
   my $stylesheet = '';
 
-  #get the head section of the document
-  my $head = $self->_html_tree()->look_down("_tag", "head"); # there should only be one
+  my (@style,@link);
+  if ($self->_relaxed()) {
+    #get the <style> nodes
+    @style = $self->_html_tree->look_down('_tag','style','type','text/css');
 
-  #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
-  my @style = $head->look_down('_tag','style','type','text/css');
+    #get the <link> nodes
+    @link = $self->_html_tree->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
+  }
+  else {
+    #get the head section of the document
+    my $head = $self->_html_tree()->look_down("_tag", "head"); # there should only be one
 
-  #get the <link> nodes underneath the head section - there should be *none* at this step in the process
-  my @link = $head->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
+    #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
+    @style = $head->look_down('_tag','style','type','text/css');
+
+    #get the <link> nodes underneath the head section - there should be *none* at this step in the process
+    @link = $head->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
+  }
 
   if (scalar @link) {
     die 'Inliner only supports link tags if you fetch the document from a remote source';
@@ -679,7 +726,7 @@ sub _collapse_inline_styles {
 
   foreach my $i (@{$content}) {
 
-    next unless (ref $i eq 'HTML::Element' || ref $i eq 'HTML::TreeBuilder');
+    next unless (ref $i && $i->isa('HTML::Element'));
 
     if ($i->attr('style')) {
 

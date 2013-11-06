@@ -22,13 +22,20 @@ CONSTRUCTOR
        Instantiates the Inliner object. Sets up class variables that are
        used during file parsing/processing. Possible options are:
 
-       html_tree (optional). Pass in a custom instance of HTML::Treebuilder
+       html_tree (optional). Pass in a fresh unparsed instance of
+       CSS::Inliner::TreeBuilder or HTML::Treebuilder.
+
+       NOTE: Any references to HTML::TreeBuilder will be substantially
+       altered by passing it in here...
 
        strip_attrs (optional). Remove all "id" and "class" attributes during
        inlining
 
        leave_style (optional). Leave style/link tags alone within <head>
        during inlining
+
+       relaxed (optional). Relaxed HTML parsing which will attempt to
+       interpret broken HTML. Required for HTML5 documents.
 
 METHODS
     fetch_file( params )
