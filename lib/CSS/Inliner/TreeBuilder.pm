@@ -43,34 +43,21 @@ issues when the implicit_tags flag is set which require the parse method to be o
 sub parse_content {
   my $self = shift;
 
-  if (!$self->{_implicit_tags}) {
+  if ($self->{_relaxed}) {
+    # protect declarations... parser is too strict here
+    $_[0] =~ s/\<!([^>]+)\>/\<decl ~pi="1" \>$1<\/decl\>/g;
+
     $self->SUPER::parse_content(@_);
 
-    # Due to the perverse arguments given above we may end up with an oddly nested tree
-    my @roots = $self->find_by_tag_name('tag', 'html');
-    if (scalar @roots > 1) {
-      my $real_root = $roots[scalar @roots - 1];
+    $self->{_tag} = '~literal';
+    $self->{text} = '';
 
-      $real_root->detach();
+    my @decls = $self->look_down('_tag','decl','~pi','1');
+    foreach my $decl (@decls) {
+      my $text = '<!' . $decl->as_text() . '>';
+      my $literal = HTML::Element->new('~literal', 'text' => $text );
 
-      foreach my $elem ($self->content_list()) {
-        $elem->delete();
-      }
-
-      foreach my $attr ($real_root->all_attr_names()) {
-        if ($attr !~ /^_/) {
-          $self->attr($attr, $real_root->attr($attr));
-        }
-      }
-
-      foreach my $elem ($real_root->content_list()) {
-        if (ref $elem) {
-          $self->insert_element($elem);
-          $self->pos($self);
-        }
-      }
-
-      $real_root->destroy();
+      $decl->replace_with($literal);
     }
   }
   else {
