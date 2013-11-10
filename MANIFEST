@@ -12,7 +12,6 @@ t/basic.t
 t/basic_comment.t
 t/basic_redeclare.t
 t/cascade.t
-t/crazytags.t
 t/css_url.t
 t/custom_html_tree.t
 t/embedded_style_block.t
@@ -22,8 +21,6 @@ t/fetch.perl
 t/html
 t/html/acidtest.html
 t/html/acidtest_result.html
-t/html/crazytags.html
-t/html/crazytags_result.html
 t/html/embedded_style.html
 t/html/embedded_style_result.html
 t/html/encoding.html
@@ -32,6 +29,8 @@ t/html/linebreaktest.html
 t/html/linebreaktest_result.html
 t/html/linktest.html
 t/html/linktest_result.html
+t/html/relaxed.html
+t/html/relaxed_result.html
 t/linebreaktest.t
 t/linktest.t
 t/ordering.t
@@ -42,4 +41,5 @@ t/Parser/fail.t
 t/Parser/hacks.t
 t/pod.t
 t/psuedo.t
+t/relaxed.t
 t/specificity.t
