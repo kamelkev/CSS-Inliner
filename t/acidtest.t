@@ -8,7 +8,7 @@ use CSS::Inliner;
 
 use FindBin qw($Bin);
 
-plan(tests => 2);
+plan(tests => 1);
 
 my $html_path = "$Bin/html/";
 my $test_file = $html_path . 'acidtest.html';
@@ -25,9 +25,3 @@ $inliner->read({html => $html});
 my $inlined = $inliner->inlinify();
 
 ok($inlined eq $correct_result, 'result was correct');
-
-my $inliner2 = CSS::Inliner->new({ relaxed => 1 });
-$inliner2->read({html => $html});
-my $inlined2 = $inliner->inlinify();
-
-ok($inlined2 eq $correct_result, 'relaxed parse result was correct');

@@ -118,6 +118,12 @@ sub new {
 
   bless $self, $class;
 
+  if ($self->_relaxed()) {
+    $self->_html_tree->ignore_unknown(0);
+    $self->_html_tree->implicit_tags(0);
+    $self->_html_tree->{_relaxed} = 1;
+  }
+
   return $self;
 }
 
@@ -237,10 +243,6 @@ sub read {
   }
 
   $self->_html_tree->store_comments(1);
-  if ($self->_relaxed()) {
-    $self->_html_tree->ignore_unknown(0);
-    $self->_html_tree->implicit_tags(0);
-  }
   $self->_html_tree->parse_content($$params{html});
 
   $self->_init_query();
@@ -373,6 +375,20 @@ sub inlinify {
     # is just p, li, dt, dd - tags we want terminated for our purposes
 
     $html = $self->_html_tree()->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+
+
+    # chance our document has gross spacing
+    if ($self->_relaxed()) {
+      my @lines = split /\n/, $html;
+
+      shift @lines; # leading line is spurious blank
+
+      for ($count = 0; $count < scalar @lines; $count++) {
+        $lines[$count] =~ s/^ //;
+      }
+
+      $html = join("\n",@lines);
+    }
   }
   else {
     $html = $self->{html};

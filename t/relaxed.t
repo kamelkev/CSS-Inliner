@@ -11,8 +11,8 @@ use FindBin qw($Bin);
 plan(tests => 1);
 
 my $html_path = "$Bin/html/";
-my $test_file = $html_path . 'crazytags.html';
-my $result_file = $html_path . 'crazytags_result.html';
+my $test_file = $html_path . 'relaxed.html';
+my $result_file = $html_path . 'relaxed_result.html';
 
 open( my $fh, $test_file ) or die "can't open $test_file: $!!\n";
 my $html = do { local( $/ ) ; <$fh> } ;

@@ -25,8 +25,8 @@ CONSTRUCTOR
        html_tree (optional). Pass in a fresh unparsed instance of
        CSS::Inliner::TreeBuilder or HTML::Treebuilder.
 
-       NOTE: Any references to HTML::TreeBuilder will be substantially
-       altered by passing it in here...
+       NOTE: Any passed references to HTML::TreeBuilder will be
+       substantially altered by passing it in here...
 
        strip_attrs (optional). Remove all "id" and "class" attributes during
        inlining
