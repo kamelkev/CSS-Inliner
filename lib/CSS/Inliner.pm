@@ -109,7 +109,7 @@ sub new {
     html => undef,
     html_tree => defined($html_tree) ? $html_tree : CSS::Inliner::TreeBuilder->new(),
     query => undef,
-    content_warnings => undef,
+    content_warnings => {},
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
     relaxed => (defined($$params{relaxed}) && $$params{relaxed}) ? 1 : 0,
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
@@ -121,7 +121,7 @@ sub new {
   if ($self->_relaxed()) {
     $self->_html_tree->ignore_unknown(0);
     $self->_html_tree->implicit_tags(0);
-    $self->_html_tree->{_relaxed} = 1;
+    $self->_html_tree->relaxed(1);
   }
 
   return $self;
@@ -158,7 +158,7 @@ sub fetch_file {
   $self->_check_object();
 
   unless ($params && $$params{url}) {
-    croak "You must pass in hash params that contain a url argument";
+    croak 'You must pass in hash params that contain a url argument';
   }
 
   #fetch a absolutized version of the html
@@ -193,10 +193,10 @@ sub read_file {
   $self->_check_object();
 
   unless ($params && $$params{filename}) {
-    croak "You must pass in hash params that contain a filename argument";
+    croak 'You must pass in hash params that contain a filename argument';
   }
 
-  open FILE, "<", $$params{filename} or die $!;
+  open FILE, "<", $$params{filename} or croak $!;
   my $content = do { local( $/ ) ; <FILE> } ;
 
   my $html;
@@ -239,7 +239,7 @@ sub read {
   $self->_check_object();
 
   unless ($params && $$params{html}) {
-    croak "You must pass in hash params that contains html data";
+    croak 'You must pass in hash params that contains html data';
   }
 
   $self->_html_tree->store_comments(1);
@@ -275,25 +275,29 @@ sub inlinify {
   $self->_content_warnings({}); # overwrite any existing warnings
 
   unless ($self->_html() && $self->_html_tree()) {
-    croak "You must instantiate and read in your content before inlinifying";
+    croak 'You must instantiate and read in your content before inlinifying';
+  }
+
+  unless ($self->_relaxed()) {
+    # perform a check to see how bad this html is...
+    $self->_validate_html({ html => $self->_html() });
   }
 
   my $html;
   if (defined $self->_css()) {
     #parse and store the stylesheet as a hash object
 
-    $self->_css()->read({css => $self->_stylesheet()});
+    $self->_css->read({css => $self->_stylesheet()});
 
-    my @css_warnings = @{$self->_css()->content_warnings()};
-
-    my %content_warns = map { $_ => 1} @css_warnings;
-
-    $self->_content_warnings(\%content_warns);
+    my @css_warnings = @{$self->_css->content_warnings()};
+    foreach my $css_warning (@css_warnings) {
+      $self->_report_warning({ info => $css_warning });
+    }
 
     my %matched_elements;
     my $count = 0;
 
-    foreach my $entry (@{$self->_css()->get_entries()}) {
+    foreach my $entry (@{$self->_css->get_entries()}) {
 
       my $selector = $$entry{selector};
       my $properties = $$entry{properties};
@@ -374,8 +378,7 @@ sub inlinify {
     # 3rd argument overrides the optional end tag, which for HTML::Element
     # is just p, li, dt, dd - tags we want terminated for our purposes
 
-    $html = $self->_html_tree()->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
-
+    $html = $self->_html_tree->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
 
     # chance our document has gross spacing
     if ($self->_relaxed()) {
@@ -387,7 +390,7 @@ sub inlinify {
         $lines[$count] =~ s/^ //;
       }
 
-      $html = join("\n",@lines);
+      $html = join("\n", @lines);
     }
   }
   else {
@@ -414,7 +417,7 @@ sub query {
     $self->_init_query();
   }
 
-  return $self->_query()->query($$params{selector});
+  return $self->_query->query($$params{selector});
 }
 
 =pod
@@ -434,7 +437,7 @@ sub specificity {
     $self->_init_query();
   }
 
-  return $self->_query()->get_specificity($$params{selector});
+  return $self->_query->get_specificity($$params{selector});
 }
 
 =pod
@@ -472,7 +475,7 @@ sub _check_object {
   my ($self, $params) = @_;
 
   unless (ref $self) {
-   croak "You must instantiate this class in order to properly use it";
+   croak 'You must instantiate this class in order to properly use it';
   }
 
   return ();
@@ -501,7 +504,7 @@ sub _fetch_url {
 
   # Create a user agent object
   my $ua = LWP::UserAgent->new;
-  $ua->agent("Mozilla/4.0"); # masquerade as Mozilla/4.0
+  $ua->agent('Mozilla/4.0'); # masquerade as Mozilla/4.0
   $ua->protocols_allowed( ['http','https'] );
 
   # Create a request
@@ -514,12 +517,12 @@ sub _fetch_url {
 
   # if not successful
   if (!$res->is_success()) {
-    die 'There was an error in fetching the document for '.$uri.' : '.$res->message;
+    croak 'There was an error in fetching the document for ' . $uri . ' : ' . $res->message;
   }
 
   # Is it a HTML document
   if ($res->content_type ne 'text/html' && $res->content_type ne 'text/css') {
-    die 'The web site address you entered is not an HTML document.';
+    croak 'The web site address you entered is not an HTML document.';
   }
 
   my $content;
@@ -550,6 +553,7 @@ sub _fetch_html {
   my $doc = CSS::Inliner::TreeBuilder->new();
   $doc->store_comments(1);
   if ($self->_relaxed()) {
+    $doc->relaxed(1);
     $doc->ignore_unknown(0);
     $doc->implicit_tags(0);
   }
@@ -640,7 +644,7 @@ sub _expand_stylesheet {
   }
   else {
     #get the head section of the document
-    my $head = $doc->look_down("_tag", "head"); # there should only be one
+    my $head = $doc->look_down('_tag', 'head'); # there should only be one
 
     #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
     @style = $head->look_down('_tag','style','type','text/css');
@@ -655,7 +659,7 @@ sub _expand_stylesheet {
     #absolutized the assetts within the stylesheet that are relative
     $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({prefix => $1, url => $2, base => $baseref})/exsgi;
 
-    my $stylesheet = HTML::Element->new('style', type => "text/css", rel=> "stylesheet");
+    my $stylesheet = HTML::Element->new('style', type => 'text/css', rel=> 'stylesheet');
     $stylesheet->push_content($content);
 
     $i->replace_with($stylesheet);
@@ -671,10 +675,57 @@ sub _expand_stylesheet {
     # absolutize the assets within the stylesheet that are relative
     $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({prefix => $1, url => $2, base => $baseref})/exsgi;
 
-    my $stylesheet = HTML::Element->new('style', type => "text/css", rel=> "stylesheet");
+    my $stylesheet = HTML::Element->new('style', type => 'text/css', rel=> 'stylesheet');
     $stylesheet->push_content($content);
 
     $i->replace_with($stylesheet);
+  }
+
+  return();
+}
+
+sub _validate_html {
+  my ($self,$params) = @_;
+
+  my $validator_tree = new CSS::Inliner::TreeBuilder();
+  $validator_tree->ignore_unknown(0);
+  $validator_tree->implicit_tags(0);
+  $validator_tree->relaxed(1);
+  $validator_tree->parse_content($$params{html});
+
+  # count up the major structural components of the document
+  my @html_nodes = $validator_tree->look_down('_tag', 'html');
+  my @head_nodes = $validator_tree->look_down('_tag', 'head');
+  my @body_nodes = $validator_tree->look_down('_tag', 'body');
+
+  if (scalar @html_nodes > 1) {
+    $self->_report_warning({ info => 'Unexpected html nodes found within referenced document altered' });
+  }
+
+  if (scalar @head_nodes > 1) {
+    $self->_report_warning({ info => 'Unexpected head nodes found within referenced document altered' });
+  }
+
+  if (scalar @body_nodes > 1) {
+    $self->_report_warning({ info => 'Unexpected body nodes found within referenced document altered' });
+  }
+
+  # get the <link> nodes, we really should not be finding these at this step in the process
+  my @link = $validator_tree->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
+
+  if (scalar @link) {
+    $self->_report_warning({ info => 'Unexpected reference to remote stylesheet skipped' });
+  }
+
+  my $body = $self->_html_tree->look_down('_tag', 'body');
+
+  if ($body) {
+    # located spurious <style> tags that won't be handled if
+    my @spurious_style = $body->look_down('_tag','style','type','text/css');
+
+    if (scalar @spurious_style) {
+      $self->_report_warning({ info => 'Unexpected reference to stylesheet within document body skipped' });
+    }
   }
 
   return();
@@ -687,31 +738,13 @@ sub _parse_stylesheet {
 
   my $stylesheet = '';
 
-  my (@style,@link);
-  if ($self->_relaxed()) {
-    #get the <style> nodes
-    @style = $self->_html_tree->look_down('_tag','style','type','text/css');
+  # figure out where to look for styles
+  my $stylesheet_root = $self->_relaxed() ? $self->_html_tree() : $self->_html_tree->look_down('_tag', 'head');
 
-    #get the <link> nodes
-    @link = $self->_html_tree->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
-  }
-  else {
-    #get the head section of the document
-    my $head = $self->_html_tree()->look_down("_tag", "head"); # there should only be one
-
-    #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
-    @style = $head->look_down('_tag','style','type','text/css');
-
-    #get the <link> nodes underneath the head section - there should be *none* at this step in the process
-    @link = $head->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
-  }
-
-  if (scalar @link) {
-    die 'Inliner only supports link tags if you fetch the document from a remote source';
-  }
+  # get the <style> nodes
+  my @style = $stylesheet_root->look_down('_tag','style','type','text/css');
 
   foreach my $i (@style) {
-
     #process this node if the html media type is screen, all or undefined (which defaults to screen)
     if (($i->tag eq 'style') && (!$i->attr('media') || $i->attr('media') =~ m/\b(all|screen)\b/)) {
 

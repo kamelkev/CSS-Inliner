@@ -40,10 +40,21 @@ issues when the implicit_tags flag is set which require the parse method to be o
 
 =cut
 
+sub relaxed {
+  my $self = shift;
+  my $value = shift;
+
+  if (defined($value)) {
+    $self->{_relaxed} = $value;
+  }
+
+  return $self->{_relaxed};
+}
+
 sub parse_content {
   my $self = shift;
 
-  if ($self->{_relaxed}) {
+  if ($self->relaxed()) {
     # protect declarations... parser is too strict here
     $_[0] =~ s/\<!([^>]+)\>/\<decl ~pi="1" \>$1<\/decl\>/g;
 
