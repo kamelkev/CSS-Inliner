@@ -51,6 +51,26 @@ sub relaxed {
   return $self->{_relaxed};
 }
 
+sub as_HTML {
+  my $self = shift;
+
+  my $html = $self->SUPER::as_HTML(@_);
+
+  if ($self->relaxed()) {
+    my @lines = split /\n/, $html;
+
+    shift @lines; # leading line is spurious blank
+
+    for (my $count = 0; $count < scalar @lines; $count++) {
+      $lines[$count] =~ s/^ //;
+    }
+
+    $html = join("\n", @lines);
+  }
+
+  return $html;
+}
+
 sub parse_content {
   my $self = shift;
 

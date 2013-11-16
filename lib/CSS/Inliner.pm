@@ -379,19 +379,6 @@ sub inlinify {
     # is just p, li, dt, dd - tags we want terminated for our purposes
 
     $html = $self->_html_tree->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
-
-    # chance our document has gross spacing
-    if ($self->_relaxed()) {
-      my @lines = split /\n/, $html;
-
-      shift @lines; # leading line is spurious blank
-
-      for ($count = 0; $count < scalar @lines; $count++) {
-        $lines[$count] =~ s/^ //;
-      }
-
-      $html = join("\n", @lines);
-    }
   }
   else {
     $html = $self->{html};
