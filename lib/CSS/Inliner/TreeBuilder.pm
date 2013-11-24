@@ -71,8 +71,8 @@ sub parse_content {
   my $self = shift;
 
   if ($self->implicit_tags() == 0) {
-    # protect declarations... parser is too strict here
-    $_[0] =~ s/\<!([^>]+)\>/\<decl ~pi="1" \>$1<\/decl\>/g;
+    # protect doctype declarations... parser is too strict here
+    $_[0] =~ s/\<!(doctype) ([^>]+)\>/\<decl ~pi="1" \>$1 $2<\/decl\>/gi;
 
     $self->SUPER::parse_content(@_);
 
