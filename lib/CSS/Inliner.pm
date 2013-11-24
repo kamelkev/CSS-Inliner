@@ -70,7 +70,7 @@ BEGIN {
 Instantiates the Inliner object. Sets up class variables that are used
 during file parsing/processing. Possible options are:
 
-B<html_tree> (optional). Pass in a fresh unparsed instance of CSS::Inliner::TreeBuilder or HTML::Treebuilder.
+B<html_tree> (optional). Pass in a fresh unparsed instance of HTML::Treebuilder
 
 NOTE: Any passed references to HTML::TreeBuilder will be substantially altered by passing it in here...
 
@@ -78,7 +78,9 @@ B<strip_attrs> (optional). Remove all "id" and "class" attributes during inlinin
 
 B<leave_style> (optional). Leave style/link tags alone within <head> during inlining
 
-B<relaxed> (optional). Relaxed HTML parsing which will attempt to interpret broken HTML. Required for HTML5 documents.
+B<relaxed> (optional). Relaxed HTML parsing which will attempt to interpret non-HTML4 documents.
+
+NOTE: This argument is not compatible with passing an html_tree.
 
 =back
 
@@ -89,25 +91,23 @@ sub new {
 
   my $class = ref($proto) || $proto;
 
-  my $html_tree;
-  if ($$params{html_tree}) {
-    if (ref $$params{html_tree} eq 'HTML::TreeBuilder') {
-      $html_tree = $$params{html_tree};
-      bless $html_tree, 'CSS::Inliner::TreeBuilder';
-    }
-    elsif (ref $$params{html_tree} eq 'CSS::Inliner::TreeBuilder') {
-      $html_tree = $$params{html_tree};
-    }
-    else {
-      croak 'Incompatible argument passed to new: "html_tree"';
-    }
+  # passed in html_tree argument must be of correct type
+  # TODO: make sure tree has no content already
+  if (defined $$params{html_tree} && $$params{html_tree} && ref $$params{html_tree} ne 'HTML::TreeBuilder') {
+    croak 'Incompatible argument passed to new: "html_tree"';
+  }
+
+  # check to make sure caller is not trying to pass both an html_tree and setting relaxed flag
+  # relaxed flag requires our own internal TreeBuilder, not HTML::TreeBuilder
+  if (defined $$params{html_tree} && $$params{html_tree} && defined $$params{relaxed} && $$params{relaxed}) {
+    croak 'Incompatible argument passed to new: "html_tree"';
   }
 
   my $self = {
     stylesheet => undef,
-    css => CSS::Inliner::Parser->new({ warns_as_errors => $$params{warns_as_errors}}),
+    css => CSS::Inliner::Parser->new({ warns_as_errors => $$params{warns_as_errors} }),
     html => undef,
-    html_tree => defined($html_tree) ? $html_tree : CSS::Inliner::TreeBuilder->new(),
+    html_tree => defined($$params{html_tree}) ? $$params{html_tree} : CSS::Inliner::TreeBuilder->new(),
     query => undef,
     content_warnings => {},
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
@@ -121,7 +121,6 @@ sub new {
   if ($self->_relaxed()) {
     $self->_html_tree->ignore_unknown(0);
     $self->_html_tree->implicit_tags(0);
-    $self->_html_tree->relaxed(1);
   }
 
   return $self;
@@ -162,7 +161,7 @@ sub fetch_file {
   }
 
   #fetch a absolutized version of the html
-  my $html = $self->_fetch_html({ url => $$params{url}});
+  my $html = $self->_fetch_html({ url => $$params{url} });
 
   $self->read({html => $html});
 
@@ -278,10 +277,8 @@ sub inlinify {
     croak 'You must instantiate and read in your content before inlinifying';
   }
 
-  unless ($self->_relaxed()) {
-    # perform a check to see how bad this html is...
-    $self->_validate_html({ html => $self->_html() });
-  }
+  # perform a check to see how bad this html is...
+  $self->_validate_html({ html => $self->_html() });
 
   my $html;
   if (defined $self->_css()) {
@@ -534,13 +531,14 @@ sub _fetch_html {
 
   $self->_check_object();
 
-  my ($content,$baseref) = $self->_fetch_url({ url => $$params{url} });
+  my $url = ($$params{url} =~ m/^https?:\/\//) ? $$params{url} : 'http://' . $$params{url};
+
+  my ($content,$baseref) = $self->_fetch_url({ url => $url });
 
   # Build the HTML tree
   my $doc = CSS::Inliner::TreeBuilder->new();
   $doc->store_comments(1);
   if ($self->_relaxed()) {
-    $doc->relaxed(1);
     $doc->ignore_unknown(0);
     $doc->implicit_tags(0);
   }
@@ -677,41 +675,57 @@ sub _validate_html {
   my $validator_tree = new CSS::Inliner::TreeBuilder();
   $validator_tree->ignore_unknown(0);
   $validator_tree->implicit_tags(0);
-  $validator_tree->relaxed(1);
   $validator_tree->parse_content($$params{html});
 
-  # count up the major structural components of the document
-  my @html_nodes = $validator_tree->look_down('_tag', 'html');
-  my @head_nodes = $validator_tree->look_down('_tag', 'head');
-  my @body_nodes = $validator_tree->look_down('_tag', 'body');
-
-  if (scalar @html_nodes > 1) {
-    $self->_report_warning({ info => 'Unexpected html nodes found within referenced document altered' });
+  if ($self->_relaxed()) {
+    # TODO: print out any html issues that would cause the relaxed parsing to modify the document or might cause
+    # a rendering problem of some type
+    #
+    # Currently there are no known issues, but when found they would go here
   }
+  else {
+    # The following are inconsistencies that can easily be found by scanning our document using the internal treebuilder
+    # The standard TreeBuilder actually alters the document in an attempt to create something "valid", but by doing so
+    # all sorts of weird things can happen, so we add them to the warnings report so the caller knows what's going on.
 
-  if (scalar @head_nodes > 1) {
-    $self->_report_warning({ info => 'Unexpected head nodes found within referenced document altered' });
-  }
+    # count up the major structural components of the document
+    my @html_nodes = $validator_tree->look_down('_tag', 'html');
+    my @head_nodes = $validator_tree->look_down('_tag', 'head');
+    my @body_nodes = $validator_tree->look_down('_tag', 'body');
 
-  if (scalar @body_nodes > 1) {
-    $self->_report_warning({ info => 'Unexpected body nodes found within referenced document altered' });
-  }
+    # we should have exactly 2 root nodes, the treebuilder inserted one and the nested one from the document...
+    if (scalar @html_nodes == 1) {
+      $self->_report_warning({ info => 'Unexpected absence of html root node, force inserted' });
+    }
+    elsif (scalar @html_nodes > 2) {
+      $self->_report_warning({ info => 'Unexpected spurious html root node(s) found within referenced document, coalesced' });
+    }
 
-  # get the <link> nodes, we really should not be finding these at this step in the process
-  my @link = $validator_tree->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
+    if (scalar @head_nodes > 1) {
+      $self->_report_warning({ info => 'Unexpected spurious head node(s) found within referenced document, coalesced' });
+    }
 
-  if (scalar @link) {
-    $self->_report_warning({ info => 'Unexpected reference to remote stylesheet skipped' });
-  }
+    if (scalar @body_nodes > 1) {
+      $self->_report_warning({ info => 'Unexpected spurious body node(s) found within referenced document, coalesced' });
+    }
 
-  my $body = $self->_html_tree->look_down('_tag', 'body');
+    # get the <link> nodes, we really should not be finding these at this step in the process
+    # this is not a problem while doing relaxed parsing... but the standard parse can do weird things here
+    my @link = $validator_tree->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
 
-  if ($body) {
-    # located spurious <style> tags that won't be handled if
-    my @spurious_style = $body->look_down('_tag','style','type','text/css');
+    if (scalar @link) {
+      $self->_report_warning({ info => 'Unexpected reference to remote stylesheet skipped' });
+    }
 
-    if (scalar @spurious_style) {
-      $self->_report_warning({ info => 'Unexpected reference to stylesheet within document body skipped' });
+    my $body = $self->_html_tree->look_down('_tag', 'body');
+
+    if ($body) {
+      # located spurious <style> tags that won't be handled
+      my @spurious_style = $body->look_down('_tag','style','type','text/css');
+
+      if (scalar @spurious_style) {
+        $self->_report_warning({ info => 'Unexpected reference to stylesheet within document body skipped' });
+      }
     }
   }
 

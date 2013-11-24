@@ -35,37 +35,33 @@ CSS::Inliner::TreeBuilder - Parser that builds a HTML syntax tree
 
 Class to handling parsing of generic HTML
 
-This sub-module is derived from HTML::TreeBuilder. The aforementioned module has some substantial
-issues when the implicit_tags flag is set which require the parse method to be overridden.
+This sub-module is derived from HTML::TreeBuilder. The aforementioned module is almost completely incapable
+of handling non-standard HTML4 documents commonly seen in the wild, let alone HTML5 documents. This module
+basically performs some minor adjustments to the way parsing and printing occur such that an acceptable result
+can be reached when handling real world documents.
 
 =cut
-
-sub relaxed {
-  my $self = shift;
-  my $value = shift;
-
-  if (defined($value)) {
-    $self->{_relaxed} = $value;
-  }
-
-  return $self->{_relaxed};
-}
 
 sub as_HTML {
   my $self = shift;
 
-  my $html = $self->SUPER::as_HTML(@_);
+  my $html;
+  if ($self->implicit_tags() == 0) {
+    my $guts = $self->guts();
 
-  if ($self->relaxed()) {
-    my @lines = split /\n/, $html;
+    # clean up indentation problem caused by mask
+    my @lines = split /\n/, $guts->as_HTML(@_);
 
-    shift @lines; # leading line is spurious blank
-
+    shift @lines; # leading line is container node open
+    pop @lines; # trailing line is container node close
     for (my $count = 0; $count < scalar @lines; $count++) {
       $lines[$count] =~ s/^ //;
     }
 
     $html = join("\n", @lines);
+  }
+  else {
+    $html = $self->SUPER::as_HTML(@_);
   }
 
   return $html;
@@ -74,14 +70,11 @@ sub as_HTML {
 sub parse_content {
   my $self = shift;
 
-  if ($self->relaxed()) {
+  if ($self->implicit_tags() == 0) {
     # protect declarations... parser is too strict here
     $_[0] =~ s/\<!([^>]+)\>/\<decl ~pi="1" \>$1<\/decl\>/g;
 
     $self->SUPER::parse_content(@_);
-
-    $self->{_tag} = '~literal';
-    $self->{text} = '';
 
     my @decls = $self->look_down('_tag','decl','~pi','1');
     foreach my $decl (@decls) {
