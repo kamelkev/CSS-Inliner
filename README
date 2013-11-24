@@ -23,7 +23,7 @@ CONSTRUCTOR
        used during file parsing/processing. Possible options are:
 
        html_tree (optional). Pass in a fresh unparsed instance of
-       CSS::Inliner::TreeBuilder or HTML::Treebuilder.
+       HTML::Treebuilder
 
        NOTE: Any passed references to HTML::TreeBuilder will be
        substantially altered by passing it in here...
@@ -35,7 +35,9 @@ CONSTRUCTOR
        during inlining
 
        relaxed (optional). Relaxed HTML parsing which will attempt to
-       interpret broken HTML. Required for HTML5 documents.
+       interpret non-HTML4 documents.
+
+       NOTE: This argument is not compatible with passing an html_tree.
 
 METHODS
     fetch_file( params )
