@@ -118,6 +118,8 @@ sub new {
 
   bless $self, $class;
 
+  # configure tree
+  $self->_html_tree->store_comments(1);
   if ($self->_relaxed()) {
     $self->_html_tree->ignore_unknown(0);
     $self->_html_tree->implicit_tags(0);
@@ -241,7 +243,6 @@ sub read {
     croak 'You must pass in hash params that contains html data';
   }
 
-  $self->_html_tree->store_comments(1);
   $self->_html_tree->parse_content($$params{html});
 
   $self->_init_query();
@@ -535,7 +536,7 @@ sub _fetch_html {
 
   my ($content,$baseref) = $self->_fetch_url({ url => $url });
 
-  # Build the HTML tree
+  # Build temporary HTML tree
   my $doc = CSS::Inliner::TreeBuilder->new();
   $doc->store_comments(1);
   if ($self->_relaxed()) {
