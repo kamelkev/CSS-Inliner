@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>
+  </title>
+  <style type="text/css">
+
+img {
+border: 0;
+}
+
+.ReadMsgBody {
+width: 100%;
+}
+
+.ExternalClass {
+width: 100%;
+}
+
+/*
+ * @page page
+ * @section background
+ * @theme page
+*/
+body {
+background-color:#CCCCCC /* @editable */;
+}
+
+.wrapper {
+width: 600px;
+}
+
+.nested {
+width: 100%;
+}
+
+/*
+ * @page page
+ * @section background
+ * @theme page
+*/
+.backgroundTable {
+background-color:#CCCCCC /* @editable */;
+}
+
+h1 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+h2 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+h3 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+h4 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+h5 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+h6 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+p {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+td {
+vertical-align:top;
+}
+
+/*
+ * @page top
+ * @section background
+ * @theme main
+*/
+.topArea {
+background-color: #ffffff /* @editable */;
+}
+
+/*
+ * @page top
+ * @section background
+ * @theme main
+*/
+.mastheadArea {
+background-color: #ffffff /* @editable */;
+}
+
+.topArea {
+padding:20px;
+}
+
+/*
+ * @page top
+ * @section top text
+ * @theme main
+*/
+.topArea {
+color: #000000 /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+text-align:left;
+}
+
+/*
+ * @page top
+ * @section top link
+ * @theme link
+*/
+.topArea a {
+text-decoration: underline /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+/*
+ * @page columns
+ * @section first text
+ * @theme main
+*/
+.firstAreaWrapper {
+background-color: #ffffff /* @editable */;
+padding:20px;
+}
+
+/*
+ * @page columns
+ * @section first text
+ * @theme main
+*/
+.firstArea {
+color: #000000 /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+text-align:left;
+}
+
+/*
+ * @page columns
+ * @section first link
+ * @theme link
+*/
+.firstArea a {
+text-decoration: underline /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+/*
+ * @page columns
+ * @section second text
+ * @theme main
+*/
+.secondAreaWrapper {
+background-color: #ffffff /* @editable */;
+padding:20px;
+}
+
+/*
+ * @page columns
+ * @section second text
+ * @theme main
+*/
+.secondArea {
+color: #000000 /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+text-align:left;
+}
+
+/*
+ * @page columns
+ * @section second link
+ * @theme link
+*/
+.secondArea a {
+text-decoration: underline /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+/*
+ * @page columns
+ * @section third text
+ * @theme main
+*/
+.thirdAreaWrapper {
+background-color: #ffffff /* @editable */;
+padding:20px;
+}
+
+/*
+ * @page columns
+ * @section third text
+ * @theme main
+*/
+.thirdArea {
+color: #000000 /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+text-align:left;
+}
+
+/*
+ * @page columns
+ * @section third link
+ * @theme link
+*/
+.thirdArea a {
+text-decoration: underline /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+/*
+ * @page page
+ * @section background
+*/
+.contentBorder {
+border: 1px none #ffffff/* @editable */;
+}
+
+/*
+ * @page page
+ * @section heading 1
+ * @style heading 1
+ * @theme title
+*/
+.heading_1 {
+color: #333333 /* @editable */;
+font-size: 20px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: bold /* @editable */;
+font-style: normal /* @editable */;
+}
+
+/*
+ * @page page
+ * @section heading 2
+ * @style heading 2
+ * @theme subtitle
+*/
+.heading_2 {
+color: #6c8b9e /* @editable */;
+font-size: 16px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+}
+
+/*
+ * @page header
+ * @section background
+ * @theme header
+*/
+.previewArea {
+background-color: #ffffff /* @editable */;
+border-top:0px none;
+border-bottom:0px none;
+text-align: center;
+padding:5px;
+}
+
+/*
+ * @page header
+ * @section header text
+ * @theme header
+*/
+.previewArea {
+color: #12347A /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+}
+
+/*
+ * @page header
+ * @section header link
+ * @theme link
+*/
+.previewArea a {
+text-decoration: none /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+.mastheadArea {
+text-align: center;
+}
+
+.mastheadArea img {
+border:none;
+display:block;
+}
+
+/*
+ * @page footer
+ * @section background
+ * @theme footer
+*/
+.footerArea {
+border-top: 1px none #ffffff /* @editable */;
+background-color: #ffffff /* @editable */;
+text-align: center;
+}
+
+/*
+ * @page footer
+ * @section footer text
+ * @theme footer
+*/
+.footerArea {
+color: #000000 /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+}
+
+/*
+ * @page footer
+ * @section footer link
+ * @theme link
+*/
+.footerArea a {
+text-decoration: none /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+.bodySettings {
+font-size:12px;
+margin:0 0 0 0;
+padding:0 0 0 0;
+}
+
+@media only screen and (max-width: 600px) {
+
+table[class="wrapper"] {
+width: 95% !important;
+}
+
+table[class="col-3"] {
+width: 100% !important;
+}
+
+img {
+width: 100% !important;
+}
+
+td[class="firstAreaWrapper"] {
+display: block;
+}
+
+td[class="secondAreaWrapper"] {
+display: block;
+}
+
+td[class="thirdAreaWrapper"] {
+display: block;
+}
+
+td[class="firstAreaWrapper"] img {
+float: right;
+margin-left: 10px;
+}
+
+td[class="secondAreaWrapper"] img {
+float: right;
+margin-left: 10px;
+}
+
+td[class="thirdAreaWrapper"] img {
+float: right;
+margin-left: 10px;
+}
+
+td[class="mastheadArea"] img {
+height:auto !important;
+width:100% !important;
+}
+
+}
+</style>
+ </head>
+ <body style="background-color: #CCCCCC;">
+  <table cellpadding="0" cellspacing="0" class="backgroundTable" style="background-color: #CCCCCC;" width="100%">
+   <tr>
+    <td align="center" style="vertical-align: top;" valign="top">
+     <table cellpadding="0" cellspacing="0" class="wrapper" style="width: 600px;">
+      <tr>
+       <td class="contentBorder" style="border: 1px none #ffffff; vertical-align: top;">
+        <table cellpadding="0" cellspacing="0" class="nested" style="width: 100%;">
+         <tr>
+          <td class="previewArea" style="background-color: #ffffff; border-bottom: 0px none; border-top: 0px none; color: #12347A; font-family: Tahoma; font-size: 12px; font-style: normal; font-weight: normal; padding: 5px; text-align: center; vertical-align: top;">
+           <div mm:edit="header">
+            <p style="margin: 0 0 0 0; padding: 0 0 0 0; text-align: center;">Having trouble reading this email? <a href="#[ONLINEVIEW]# " style="color: #6c8b9e; text-decoration: none;">View it in your browser.</a></p>
+           </div>
+          </td>
+         </tr>
+         <tr>
+          <td class="mastheadArea" style="background-color: #ffffff; text-align: center; vertical-align: top;"><img mm:masthead="masthead" src="http://www.mailermailer.com/images/tmpl/mastheads/news_and_updates/newsletter.jpg" style="border: none; display: block;" /></td>
+         </tr>
+        </table>
+        <table cellpadding="0" cellspacing="0" class="nested" style="width: 100%;">
+         <tr>
+          <td class="topArea" style="background-color: #ffffff; color: #000000; font-family: Tahoma; font-size: 12px; font-style: normal; font-weight: normal; padding: 20px; text-align: left; vertical-align: top;" valign="top"><img mm:image="image_top" src="http://images.mailermailer.com/showplaceholder.bin?width=560" style="border: 0; max-width: 560px;" /><div>&nbsp;</div>
+           <div mm:edit="top">
+            <p style="margin: 0 0 0 0; padding: 0 0 0 0;"><span class="heading_1" style="color: #333333; font-family: Tahoma; font-size: 20px; font-style: normal; font-weight: bold;">Heading</span></p>
+            <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+            <p style="margin: 0 0 0 0; padding: 0 0 0 0;">Normal text.</p>
+            <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+            <p style="margin: 0 0 0 0; padding: 0 0 0 0;"><span class="heading_2" style="color: #6c8b9e; font-family: Tahoma; font-size: 16px; font-style: normal; font-weight: normal;">Sub-Heading</span></p>
+            <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+            <p style="margin: 0 0 0 0; padding: 0 0 0 0;">Normal text.</p>
+           </div>
+          </td>
+         </tr>
+        </table>
+        <table cellpadding="0" cellspacing="0" class="nested" style="width: 100%;">
+         <tr>
+          <td class="firstAreaWrapper" style="background-color: #ffffff; padding: 20px; vertical-align: top;" valign="top">
+           <table cellpadding="0" cellspacing="0" class="col-3">
+            <tr>
+             <td class="firstArea" style="color: #000000; font-family: Tahoma; font-size: 12px; font-style: normal; font-weight: normal; text-align: left; vertical-align: top;" valign="top"><img alt="" mm:image="image_first" src="http://images.mailermailer.com/showplaceholder.bin?width=160" style="border: 0; max-width: 160px;" /><div>&nbsp;</div>
+              <div mm:edit="first">
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;"><span class="heading_1" style="color: #333333; font-family: Tahoma; font-size: 20px; font-style: normal; font-weight: bold;">Heading</span></p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">Normal text.</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;"><span class="heading_2" style="color: #6c8b9e; font-family: Tahoma; font-size: 16px; font-style: normal; font-weight: normal;">Sub-Heading</span></p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">Normal text.</p>
+              </div>
+             </td>
+            </tr>
+           </table>
+          </td>
+          <td class="secondAreaWrapper" style="background-color: #ffffff; padding: 20px; vertical-align: top;" valign="top">
+           <table cellpadding="0" cellspacing="0" class="col-3">
+            <tr>
+             <td class="secondArea" style="color: #000000; font-family: Tahoma; font-size: 12px; font-style: normal; font-weight: normal; text-align: left; vertical-align: top;" valign="top"><img alt="" mm:image="image_second" src="http://images.mailermailer.com/showplaceholder.bin?width=160" style="border: 0; max-width: 160px;" /><div>&nbsp;</div>
+              <div mm:edit="second">
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;"><span class="heading_1" style="color: #333333; font-family: Tahoma; font-size: 20px; font-style: normal; font-weight: bold;">Heading</span></p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">Normal text.</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;"><span class="heading_2" style="color: #6c8b9e; font-family: Tahoma; font-size: 16px; font-style: normal; font-weight: normal;">Sub-Heading</span></p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">Normal text.</p>
+              </div>
+             </td>
+            </tr>
+           </table>
+          </td>
+          <td class="thirdAreaWrapper" style="background-color: #ffffff; padding: 20px; vertical-align: top;" valign="top">
+           <table cellpadding="0" cellspacing="0" class="col-3">
+            <tr>
+             <td class="thirdArea" style="color: #000000; font-family: Tahoma; font-size: 12px; font-style: normal; font-weight: normal; text-align: left; vertical-align: top;" valign="top"><img alt="" mm:image="image_third" src="http://images.mailermailer.com/showplaceholder.bin?width=160" style="border: 0; max-width: 160px;" /><div>&nbsp;</div>
+              <div mm:edit="third">
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;"><span class="heading_1" style="color: #333333; font-family: Tahoma; font-size: 20px; font-style: normal; font-weight: bold;">Heading</span></p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">Normal text.</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;"><span class="heading_2" style="color: #6c8b9e; font-family: Tahoma; font-size: 16px; font-style: normal; font-weight: normal;">Sub-Heading</span></p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">&nbsp;</p>
+               <p style="margin: 0 0 0 0; padding: 0 0 0 0;">Normal text.</p>
+              </div>
+             </td>
+            </tr>
+           </table>
+          </td>
+         </tr>
+        </table>
+        <table cellpadding="20" cellspacing="0" class="nested" style="width: 100%;">
+         <tr>
+          <td class="footerArea" colspan="2" style="background-color: #ffffff; border-top: 1px none #ffffff; color: #000000; font-family: Tahoma; font-size: 12px; font-style: normal; font-weight: normal; text-align: center; vertical-align: top;">
+           <div mm:footer="footer"> #[SENDER_COMPANY]# <br /> #[SENDER_ADDRESS]# <br /> This email was sent to: <a href="mailto:#[USER_EMAIL]#" style="color: #6c8b9e; text-decoration: none;">#[USER_EMAIL]#</a><br /><a href="#[UNSUB_LINK]#" style="color: #6c8b9e; text-decoration: none;">Unsubscribe</a></div>
+          </td>
+         </tr>
+        </table>
+       </td>
+      </tr>
+     </table>
+    </td>
+   </tr>
+  </table>
+ </body>
+</html>

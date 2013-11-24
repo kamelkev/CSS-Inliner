@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<style type="text/css">
+
+img {
+border: 0;
+}
+
+.ReadMsgBody {
+width: 100%;
+}
+
+.ExternalClass {
+width: 100%;
+}
+
+/*
+ * @page page
+ * @section background
+ * @theme page
+*/
+body {
+background-color:#CCCCCC /* @editable */;
+}
+
+.wrapper {
+width: 600px;
+}
+
+.nested {
+width: 100%;
+}
+
+/*
+ * @page page
+ * @section background
+ * @theme page
+*/
+.backgroundTable {
+background-color:#CCCCCC /* @editable */;
+}
+
+h1 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+h2 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+h3 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+h4 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+h5 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+h6 {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+p {
+margin: 0 0 0 0;
+padding: 0 0 0 0;
+}
+
+td {
+vertical-align:top;
+}
+
+/*
+ * @page top
+ * @section background
+ * @theme main
+*/
+.topArea {
+background-color: #ffffff /* @editable */;
+}
+
+/*
+ * @page top
+ * @section background
+ * @theme main
+*/
+.mastheadArea {
+background-color: #ffffff /* @editable */;
+}
+
+.topArea {
+padding:20px;
+}
+
+/*
+ * @page top
+ * @section top text
+ * @theme main
+*/
+.topArea {
+color: #000000 /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+text-align:left;
+}
+
+/*
+ * @page top
+ * @section top link
+ * @theme link
+*/
+.topArea a {
+text-decoration: underline /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+/*
+ * @page columns
+ * @section first text
+ * @theme main
+*/
+.firstAreaWrapper {
+background-color: #ffffff /* @editable */;
+padding:20px;
+}
+
+/*
+ * @page columns
+ * @section first text
+ * @theme main
+*/
+.firstArea {
+color: #000000 /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+text-align:left;
+}
+
+/*
+ * @page columns
+ * @section first link
+ * @theme link
+*/
+.firstArea a {
+text-decoration: underline /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+/*
+ * @page columns
+ * @section second text
+ * @theme main
+*/
+.secondAreaWrapper {
+background-color: #ffffff /* @editable */;
+padding:20px;
+}
+
+/*
+ * @page columns
+ * @section second text
+ * @theme main
+*/
+.secondArea {
+color: #000000 /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+text-align:left;
+}
+
+/*
+ * @page columns
+ * @section second link
+ * @theme link
+*/
+.secondArea a {
+text-decoration: underline /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+/*
+ * @page columns
+ * @section third text
+ * @theme main
+*/
+.thirdAreaWrapper {
+background-color: #ffffff /* @editable */;
+padding:20px;
+}
+
+/*
+ * @page columns
+ * @section third text
+ * @theme main
+*/
+.thirdArea {
+color: #000000 /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+text-align:left;
+}
+
+/*
+ * @page columns
+ * @section third link
+ * @theme link
+*/
+.thirdArea a {
+text-decoration: underline /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+/*
+ * @page page
+ * @section background
+*/
+.contentBorder {
+border: 1px none #ffffff/* @editable */;
+}
+
+/*
+ * @page page
+ * @section heading 1
+ * @style heading 1
+ * @theme title
+*/
+.heading_1 {
+color: #333333 /* @editable */;
+font-size: 20px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: bold /* @editable */;
+font-style: normal /* @editable */;
+}
+
+/*
+ * @page page
+ * @section heading 2
+ * @style heading 2
+ * @theme subtitle
+*/
+.heading_2 {
+color: #6c8b9e /* @editable */;
+font-size: 16px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+}
+
+/*
+ * @page header
+ * @section background
+ * @theme header
+*/
+.previewArea {
+background-color: #ffffff /* @editable */;
+border-top:0px none;
+border-bottom:0px none;
+text-align: center;
+padding:5px;
+}
+
+/*
+ * @page header
+ * @section header text
+ * @theme header
+*/
+.previewArea {
+color: #12347A /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+}
+
+/*
+ * @page header
+ * @section header link
+ * @theme link
+*/
+.previewArea a {
+text-decoration: none /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+.mastheadArea {
+text-align: center;
+}
+
+.mastheadArea img {
+border:none;
+display:block;
+}
+
+/*
+ * @page footer
+ * @section background
+ * @theme footer
+*/
+.footerArea {
+border-top: 1px none #ffffff /* @editable */;
+background-color: #ffffff /* @editable */;
+text-align: center;
+}
+
+/*
+ * @page footer
+ * @section footer text
+ * @theme footer
+*/
+.footerArea {
+color: #000000 /* @editable */;
+font-size: 12px /* @editable */;
+font-family: Tahoma /* @editable */;
+font-weight: normal /* @editable */;
+font-style: normal /* @editable */;
+}
+
+/*
+ * @page footer
+ * @section footer link
+ * @theme link
+*/
+.footerArea a {
+text-decoration: none /* @editable */;
+color: #6c8b9e /* @editable */;
+}
+
+.bodySettings {
+font-size:12px;
+margin:0 0 0 0;
+padding:0 0 0 0;
+}
+
+@media only screen and (max-width: 600px) {
+
+table[class="wrapper"] {
+width: 95% !important;
+}
+
+table[class="col-3"] {
+width: 100% !important;
+}
+
+img {
+width: 100% !important;
+}
+
+td[class="firstAreaWrapper"] {
+display: block;
+}
+
+td[class="secondAreaWrapper"] {
+display: block;
+}
+
+td[class="thirdAreaWrapper"] {
+display: block;
+}
+
+td[class="firstAreaWrapper"] img {
+float: right;
+margin-left: 10px;
+}
+
+td[class="secondAreaWrapper"] img {
+float: right;
+margin-left: 10px;
+}
+
+td[class="thirdAreaWrapper"] img {
+float: right;
+margin-left: 10px;
+}
+
+td[class="mastheadArea"] img {
+height:auto !important;
+width:100% !important;
+}
+
+}
+</style>
+</head>
+
+<body>
+  <table width="100%" cellspacing="0" cellpadding="0" class="backgroundTable">
+    <tr>
+      <td valign="top" align="center">
+        <table class="wrapper" cellspacing="0" cellpadding="0">
+          <tr>
+            <td class="contentBorder">
+              <table class="nested" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td class="previewArea">
+                    <div mm:edit="header">
+                      <p style="text-align: center;">Having trouble reading this email?
+                        <a href="#[ONLINEVIEW]# ">View it in your browser.</a>
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="mastheadArea">
+                    <img mm:masthead="masthead" src="http://www.mailermailer.com/images/tmpl/mastheads/news_and_updates/newsletter.jpg" />
+                  </td>
+                </tr>
+              </table>
+              <table class="nested" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td valign="top" class="topArea">
+                    <img src="http://images.mailermailer.com/showplaceholder.bin?width=560" mm:image="image_top" style="max-width:560px;" />
+                    <div>&nbsp;</div>
+                    <div mm:edit="top">
+                      <p>
+                        <span class="heading_1">Heading</span>
+                      </p>
+                      <p>&nbsp;</p>
+                      <p>Normal text.</p>
+                      <p>&nbsp;</p>
+                      <p><span class="heading_2">Sub-Heading</span></p>
+                      <p>&nbsp;</p>
+                      <p>Normal text.</p>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <table class="nested" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td valign="top" class="firstAreaWrapper">
+                    <table class="col-3" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td valign="top" class="firstArea">
+                          <img src="http://images.mailermailer.com/showplaceholder.bin?width=160" mm:image="image_first" style="max-width:160px;" alt="" />
+                          <div>&nbsp;</div>
+                          <div mm:edit="first">
+                            <p>
+                              <span class="heading_1">Heading</span>
+                            </p>
+                            <p>&nbsp;</p>
+                            <p>Normal text.</p>
+                            <p>&nbsp;</p>
+                            <p><span class="heading_2">Sub-Heading</span></p>
+                            <p>&nbsp;</p>
+                            <p>Normal text.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>        
+                  </td>
+                  <td valign="top" class="secondAreaWrapper">
+                    <table class="col-3" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td valign="top" class="secondArea">
+                          <img src="http://images.mailermailer.com/showplaceholder.bin?width=160" mm:image="image_second" style="max-width:160px;" alt="" />
+                          <div>&nbsp;</div>
+                          <div mm:edit="second">
+                            <p>
+                              <span class="heading_1">Heading</span>
+                            </p> 
+                            <p>&nbsp;</p>
+                            <p>Normal text.</p>
+                            <p>&nbsp;</p>
+                            <p><span class="heading_2">Sub-Heading</span></p>
+                            <p>&nbsp;</p>
+                            <p>Normal text.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>      
+                  </td>
+                   <td valign="top" class="thirdAreaWrapper">
+                    <table class="col-3" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td valign="top" class="thirdArea">
+                          <img src="http://images.mailermailer.com/showplaceholder.bin?width=160" mm:image="image_third" style="max-width:160px;" alt="" />
+                          <div>&nbsp;</div>
+                          <div mm:edit="third">
+                            <p>
+                              <span class="heading_1">Heading</span>
+                            </p>  
+                            <p>&nbsp;</p>
+                            <p>Normal text.</p>
+                            <p>&nbsp;</p>
+                            <p><span class="heading_2">Sub-Heading</span></p>
+                            <p>&nbsp;</p>
+                            <p>Normal text.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>      
+                  </td>
+                </tr>
+              </table>
+              <table class="nested" cellpadding="20" cellspacing="0">  
+                <tr>
+                  <td class="footerArea" colspan="2">
+                    <div mm:footer="footer">
+                      #[SENDER_COMPANY]#
+                      <br>
+                      #[SENDER_ADDRESS]#
+                      <br>
+                      This email was sent to: <a href="mailto:#[USER_EMAIL]#">#[USER_EMAIL]#</a>
+                      <br>
+                      <a href="#[UNSUB_LINK]#">Unsubscribe</a>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>	
