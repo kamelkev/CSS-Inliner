@@ -175,7 +175,12 @@ sub read {
     $string =~ s!/\*.*?\*\/!!g;
 
     # Split into styles
-    foreach ( grep { /\S/ } split /(?<=\})/, $string ) {
+    my @tokens = grep { /\S/ } (split /(?<=\})/, $string);
+    while ($_ = shift @tokens) {
+      if ( /^\s*\@media/ ) {
+        while (shift(@tokens) !~ /^\s*\}\s*$/) { }; # discard all @media query subrules
+        next;
+      }
 
       unless ( /^\s*([^{]+?)\s*\{(.*)\}\s*$/ ) {
         $self->_report_warning({ info => "Invalid or unexpected style data '$_'" });
