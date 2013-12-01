@@ -630,6 +630,8 @@ sub _expand_stylesheet {
   }
 
   foreach my $i (@link) {
+    next unless ($i->attr('rel') // '') eq 'stylesheet' || ($i->attr('type') // '') eq 'text/css' || ($i->attr('href') // '') =~ m/.css$/;
+
     my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
 
     #absolutized the assetts within the stylesheet that are relative
