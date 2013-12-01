@@ -47,18 +47,21 @@ sub as_HTML {
 
   my $html;
   if ($self->implicit_tags() == 0) {
-    my $guts = $self->guts();
+    $html = $self->SUPER::as_HTML(@_);
 
-    # clean up indentation problem caused by mask
-    my @lines = split /\n/, $guts->as_HTML(@_);
+    #strip trailing and leading whitespace which our relaxed mode may have
+    #inadvertently adds
+    $html =~ s/^\s+|\s+$//g;
 
-    shift @lines; # leading line is container node open
-    pop @lines; # trailing line is container node close
+    # our indentation is messed up by 1 space, try to clean it up
+    my @lines = split /\n/, $html;
     for (my $count = 0; $count < scalar @lines; $count++) {
       $lines[$count] =~ s/^ //;
     }
 
-    $html = join("\n", @lines);
+    # put html back together after whitespace processing, probably still indentation
+    # problems, but this is the best we can do without some sort of indentation library
+    $html = join("\n",@lines);
   }
   else {
     $html = $self->SUPER::as_HTML(@_);
@@ -75,6 +78,9 @@ sub parse_content {
     $_[0] =~ s/\<!(doctype) ([^>]+)\>/\<decl ~pi="1" \>$1 $2<\/decl\>/gi;
 
     $self->SUPER::parse_content(@_);
+
+    $self->{_tag} = '~literal';
+    $self->{text} = '';
 
     my @decls = $self->look_down('_tag','decl','~pi','1');
     foreach my $decl (@decls) {
