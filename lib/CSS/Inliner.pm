@@ -67,6 +67,8 @@ BEGIN {
 
 =item new
 
+=item
+
 Instantiates the Inliner object. Sets up class variables that are used
 during file parsing/processing. Possible options are:
 
