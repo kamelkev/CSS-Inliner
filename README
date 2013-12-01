@@ -18,7 +18,8 @@ DESCRIPTION
     top level <style> declarations.
 
 METHODS
-    new Instantiates the Inliner object. Sets up class variables that are
+    new
+        Instantiates the Inliner object. Sets up class variables that are
         used during file parsing/processing. Possible options are:
 
         html_tree - (optional) Pass in a fresh unparsed instance of
