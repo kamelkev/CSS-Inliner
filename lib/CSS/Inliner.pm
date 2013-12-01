@@ -61,28 +61,26 @@ BEGIN {
 
 =pod
 
-=head1 CONSTRUCTOR
+=head1 METHODS
 
-=over 3
+=over
 
-=item new ([ OPTIONS ])
+=item new
 
 Instantiates the Inliner object. Sets up class variables that are used
 during file parsing/processing. Possible options are:
 
-B<html_tree> (optional). Pass in a fresh unparsed instance of HTML::Treebuilder
+html_tree - (optional) Pass in a fresh unparsed instance of HTML::Treebuilder
 
 NOTE: Any passed references to HTML::TreeBuilder will be substantially altered by passing it in here...
 
-B<strip_attrs> (optional). Remove all "id" and "class" attributes during inlining
+strip_attrs - (optional) Remove all "id" and "class" attributes during inlining
 
-B<leave_style> (optional). Leave style/link tags alone within <head> during inlining
+leave_style - (optional) Leave style/link tags alone within <head> during inlining
 
-B<relaxed> (optional). Relaxed HTML parsing which will attempt to interpret non-HTML4 documents.
+relaxed - (optional) Relaxed HTML parsing which will attempt to interpret non-HTML4 documents.
 
 NOTE: This argument is not compatible with passing an html_tree.
-
-=back
 
 =cut
 
@@ -128,20 +126,14 @@ sub new {
   return $self;
 }
 
-=head1 METHODS
-
-=cut
-
 =pod
 
-=over 8
-
-=item fetch_file( params )
+=item fetch_file
 
 Fetches a remote HTML file that supposedly contains both HTML and a
 style declaration, properly tags the data with the proper characterset
 as provided by the remote webserver (if any). Subsequently calls the
-read() method automatically.
+read method automatically.
 
 This method expands all relative urls, as well as fully expands the
 stylesheet reference within the document.
@@ -170,7 +162,7 @@ sub fetch_file {
   return();
 }
 
-=item read_file( params )
+=item read_file
 
 Opens and reads an HTML file that supposedly contains both HTML and a
 style declaration.  It subsequently calls the read() method
@@ -215,7 +207,7 @@ sub read_file {
 
 =pod
 
-=item read( params )
+=item read
 
 Reads passed html data and parses it.  The intermediate data is stored in
 class variables.
@@ -259,7 +251,7 @@ sub read {
 
 =pod
 
-=item inlinify()
+=item inlinify
 
 Processes the html data that was entered through either 'read' or
 'read_file', returns a scalar that contains a composite chunk of html
@@ -387,7 +379,7 @@ sub inlinify {
 
 =pod
 
-=item query()
+=item query
 
 Given a particular selector return back the applicable styles
 
@@ -407,7 +399,7 @@ sub query {
 
 =pod
 
-=item specificity()
+=item specificity
 
 Given a particular selector return back the associated selectivity
 
@@ -427,12 +419,12 @@ sub specificity {
 
 =pod
 
-=item content_warnings()
+=item content_warnings
 
 Return back any warnings thrown while inlining a given block of content.
 
 Note: content warnings are initialized at inlining time, not at read time. In
-order to receive back content feedback you must perform inlinify() first
+order to receive back content feedback you must perform inlinify first
 
 =back
 
@@ -518,9 +510,6 @@ sub _fetch_url {
     $content = $res->content || ''; # best we can do, no encoding given
   }
 
-  # remove the <HTML> tag pair as parser will add it again.
-  $content =~ s|</?html>||gi;
-
   # Expand all URLs to absolute ones
   my $baseref = $res->base;
 
@@ -536,13 +525,12 @@ sub _fetch_html {
 
   my ($content,$baseref) = $self->_fetch_url({ url => $url });
 
-  # Build temporary HTML tree
+  # Build "relaxed" HTML tree using internal treebuilder - we want to return html that is as
+  # close to the original as possible. We can more strictly parse this later if necessary
   my $doc = CSS::Inliner::TreeBuilder->new();
   $doc->store_comments(1);
-  if ($self->_relaxed()) {
-    $doc->ignore_unknown(0);
-    $doc->implicit_tags(0);
-  }
+  $doc->ignore_unknown(0);
+  $doc->implicit_tags(0);
   $doc->parse_content($content);
 
   # Change relative links to absolute links
@@ -623,20 +611,20 @@ sub _expand_stylesheet {
   my (@style,@link);
   if ($self->_relaxed()) {
     #get the <style> nodes
-    @style = $doc->look_down('_tag','style','type','text/css');
+    @style = $doc->look_down('_tag','style');
 
     #get the <link> nodes
-    @link = $doc->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
+    @link = $doc->look_down('_tag','link','href',qr/./);
   }
   else {
     #get the head section of the document
     my $head = $doc->look_down('_tag', 'head'); # there should only be one
 
     #get the <style> nodes underneath the head section - that's the only place stylesheets are allowed to live
-    @style = $head->look_down('_tag','style','type','text/css');
+    @style = $head->look_down('_tag','style');
 
     #get the <link> nodes underneath the head section - there should be *none* at this step in the process
-    @link = $head->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
+    @link = $head->look_down('_tag','link','href',qr/./);
   }
 
   foreach my $i (@link) {
@@ -685,7 +673,7 @@ sub _validate_html {
     # Currently there are no known issues, but when found they would go here
   }
   else {
-    # The following are inconsistencies that can easily be found by scanning our document using the internal treebuilder
+    # The following are inconsistencies that can easily be found by scanning our document using the internal Treebuilder
     # The standard TreeBuilder actually alters the document in an attempt to create something "valid", but by doing so
     # all sorts of weird things can happen, so we add them to the warnings report so the caller knows what's going on.
 
@@ -695,10 +683,10 @@ sub _validate_html {
     my @body_nodes = $validator_tree->look_down('_tag', 'body');
 
     # we should have exactly 2 root nodes, the treebuilder inserted one and the nested one from the document...
-    if (scalar @html_nodes == 1) {
+    if (scalar @html_nodes == 0) {
       $self->_report_warning({ info => 'Unexpected absence of html root node, force inserted' });
     }
-    elsif (scalar @html_nodes > 2) {
+    elsif (scalar @html_nodes > 1) {
       $self->_report_warning({ info => 'Unexpected spurious html root node(s) found within referenced document, coalesced' });
     }
 
@@ -864,12 +852,11 @@ http://www.mailermailer.com/
 
 =head1 AUTHOR
 
-Kevin Kamel <C<kamelkev@mailermailer.com>>
+Kevin Kamel <kamelkev@mailermailer.com>
 
 =head1 CONTRIBUTORS
 
-Vivek Khera <C<vivek@khera.org>>
-Michael Peters <C<wonko@cpan.org>>
+Vivek Khera <vivek@khera.org>, Michael Peters <wonko@cpan.org>
 
 =head1 LICENSE
 
