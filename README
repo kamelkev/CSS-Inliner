@@ -17,104 +17,101 @@ DESCRIPTION
     emails. This is useful as even in 2013 Gmail and Hotmail don't support
     top level <style> declarations.
 
-CONSTRUCTOR
-    new ([ OPTIONS ])
-       Instantiates the Inliner object. Sets up class variables that are
-       used during file parsing/processing. Possible options are:
-
-       html_tree (optional). Pass in a fresh unparsed instance of
-       HTML::Treebuilder
-
-       NOTE: Any passed references to HTML::TreeBuilder will be
-       substantially altered by passing it in here...
-
-       strip_attrs (optional). Remove all "id" and "class" attributes during
-       inlining
-
-       leave_style (optional). Leave style/link tags alone within <head>
-       during inlining
-
-       relaxed (optional). Relaxed HTML parsing which will attempt to
-       interpret non-HTML4 documents.
-
-       NOTE: This argument is not compatible with passing an html_tree.
-
 METHODS
-    fetch_file( params )
-            Fetches a remote HTML file that supposedly contains both HTML
-            and a style declaration, properly tags the data with the proper
-            characterset as provided by the remote webserver (if any).
-            Subsequently calls the read() method automatically.
+    new Instantiates the Inliner object. Sets up class variables that are
+        used during file parsing/processing. Possible options are:
 
-            This method expands all relative urls, as well as fully expands
-            the stylesheet reference within the document.
+        html_tree - (optional) Pass in a fresh unparsed instance of
+        HTML::Treebuilder
 
-            This method requires you to pass in a params hash that contains
-            a url argument for the requested document. For example:
+        NOTE: Any passed references to HTML::TreeBuilder will be
+        substantially altered by passing it in here...
 
-            $self->fetch_file({ url => 'http://www.example.com' });
+        strip_attrs - (optional) Remove all "id" and "class" attributes
+        during inlining
 
-    read_file( params )
-            Opens and reads an HTML file that supposedly contains both HTML
-            and a style declaration. It subsequently calls the read() method
-            automatically.
+        leave_style - (optional) Leave style/link tags alone within <head>
+        during inlining
 
-            This method requires you to pass in a params hash that contains
-            a filename argument. For example:
+        relaxed - (optional) Relaxed HTML parsing which will attempt to
+        interpret non-HTML4 documents.
 
-            $self->read_file({filename => 'myfile.html'});
+        NOTE: This argument is not compatible with passing an html_tree.
 
-            Additionally you can specify the character encoding within the
-            file, for example:
+    fetch_file
+        Fetches a remote HTML file that supposedly contains both HTML and a
+        style declaration, properly tags the data with the proper
+        characterset as provided by the remote webserver (if any).
+        Subsequently calls the read method automatically.
 
-            $self->read_file({filename => 'myfile.html', charset =>
-            'utf8'});
+        This method expands all relative urls, as well as fully expands the
+        stylesheet reference within the document.
 
-    read( params )
-            Reads passed html data and parses it. The intermediate data is
-            stored in class variables.
+        This method requires you to pass in a params hash that contains a
+        url argument for the requested document. For example:
 
-            The <style> block is ripped out of the html here, and stored
-            separately. Class/ID/Names used in the markup are left alone.
+        $self->fetch_file({ url => 'http://www.example.com' });
 
-            This method requires you to pass in a params hash that contains
-            scalar html data. For example:
+    read_file
+        Opens and reads an HTML file that supposedly contains both HTML and
+        a style declaration. It subsequently calls the read() method
+        automatically.
 
-            $self->read({html => $html});
+        This method requires you to pass in a params hash that contains a
+        filename argument. For example:
 
-            NOTE: You are required to pass a properly encoded perl reference
-            to the html data. This method does *not* do the dirty work of
-            encoding the html as utf8 - do that before calling this method.
+        $self->read_file({filename => 'myfile.html'});
 
-    inlinify()
-            Processes the html data that was entered through either 'read'
-            or 'read_file', returns a scalar that contains a composite chunk
-            of html that has inline styles instead of a top level <style>
-            declaration.
+        Additionally you can specify the character encoding within the file,
+        for example:
 
-    query() Given a particular selector return back the applicable styles
+        $self->read_file({filename => 'myfile.html', charset => 'utf8'});
 
-    specificity()
-            Given a particular selector return back the associated
-            selectivity
+    read
+        Reads passed html data and parses it. The intermediate data is
+        stored in class variables.
 
-    content_warnings()
-            Return back any warnings thrown while inlining a given block of
-            content.
+        The <style> block is ripped out of the html here, and stored
+        separately. Class/ID/Names used in the markup are left alone.
 
-            Note: content warnings are initialized at inlining time, not at
-            read time. In order to receive back content feedback you must
-            perform inlinify() first
+        This method requires you to pass in a params hash that contains
+        scalar html data. For example:
+
+        $self->read({html => $html});
+
+        NOTE: You are required to pass a properly encoded perl reference to
+        the html data. This method does *not* do the dirty work of encoding
+        the html as utf8 - do that before calling this method.
+
+    inlinify
+        Processes the html data that was entered through either 'read' or
+        'read_file', returns a scalar that contains a composite chunk of
+        html that has inline styles instead of a top level <style>
+        declaration.
+
+    query
+        Given a particular selector return back the applicable styles
+
+    specificity
+        Given a particular selector return back the associated selectivity
+
+    content_warnings
+        Return back any warnings thrown while inlining a given block of
+        content.
+
+        Note: content warnings are initialized at inlining time, not at read
+        time. In order to receive back content feedback you must perform
+        inlinify first
 
 Sponsor
     This code has been developed under sponsorship of MailerMailer LLC,
     http://www.mailermailer.com/
 
 AUTHOR
-    Kevin Kamel <"kamelkev@mailermailer.com">
+    Kevin Kamel <kamelkev@mailermailer.com>
 
 CONTRIBUTORS
-    Vivek Khera <"vivek@khera.org"> Michael Peters <"wonko@cpan.org">
+    Vivek Khera <vivek@khera.org>, Michael Peters <wonko@cpan.org>
 
 LICENSE
     This module is Copyright 2013 Khera Communications, Inc. It is licensed
