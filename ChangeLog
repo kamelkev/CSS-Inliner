@@ -146,3 +146,20 @@
 		- Add test for url() fix
 	* Add explicit test to confirm that pull request patch does in fact retain comments
 	* Fix versioning issues
+
+3932	2013-12-02	Kevin Kamel <kamelkev@mailermailer.com>
+	* Introduce CSS::Inliner::TreeBuilder, subclass of HTML::TreeBuilder
+		- enables "relaxed" parsing through unconventional implicit_tag disabling
+	* Introduce "relaxed" mode flag
+		- allows parsing of non-standards compliant documents
+		- allows parsing of HTML5 documents
+		- add tests to ensure described functionality matches up
+	* Add new _validate_html method, which will add warnings to the report representing gross document problems
+	* Add support for media queries, this is automatic and requires no flags
+	* Address issues with indentation of outputted code
+		- NOTE: indentation within relaxed mode does not work as expected, limited by underlying libraries
+	* Address concerns raised by CPAN RT84513
+		- ensure that both relaxed and standard parsing always allow link tags within html
+	* Update POD within Inliner.pm such that it generates more consistent documentation for CPAN/GitHub
+	* Manifest updated to represent all project files
+	* Fix some silly issues within tests that hadn't been noticed before	
