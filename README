@@ -18,7 +18,7 @@ DESCRIPTION
     top level <style> declarations.
 
 METHODS
-    new
+     new
         Instantiates the Inliner object. Sets up class variables that are
         used during file parsing/processing. Possible options are:
 

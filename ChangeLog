@@ -160,3 +160,7 @@
 3933	2013-12-02	Kevin Kamel <kamelkev@mailermailer.com>
 	* Fix formatting of Changelog
 	* Tick up the HTML::TreeBuilder version to 5.03 - 4.2 apparently no longer exists?
+
+3934	2013-12-17	Kevin Kamel <kamelkev@mailermailer.com>
+	* Work around pod bug that was causing some problems for users
+	* Fix issue whereby <link> references that were not inlined weren't generating a content warning 

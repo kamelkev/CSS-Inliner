@@ -2,7 +2,7 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-our $VERSION = '3933';
+our $VERSION = '3934';
 
 use Carp;
 
@@ -65,9 +65,7 @@ BEGIN {
 
 =over
 
-=item new
-
-=item
+=item E<32>new
 
 Instantiates the Inliner object. Sets up class variables that are used
 during file parsing/processing. Possible options are:
@@ -702,12 +700,15 @@ sub _validate_html {
       $self->_report_warning({ info => 'Unexpected spurious body node(s) found within referenced document, coalesced' });
     }
 
-    # get the <link> nodes, we really should not be finding these at this step in the process
-    # this is not a problem while doing relaxed parsing... but the standard parse can do weird things here
-    my @link = $validator_tree->look_down('_tag','link','rel','stylesheet','type','text/css','href',qr/./);
+    my @link = $validator_tree->look_down('_tag','link','href',qr/./);
 
-    if (scalar @link) {
-      $self->_report_warning({ info => 'Unexpected reference to remote stylesheet skipped' });
+    foreach my $i (@link) {
+      # link references to stylesheets at this point in the workflow means the caller is doing something improper
+      # currently such references are only chased down if you fetch a document, not if you feed one in
+      if (($i->attr('rel') // '') eq 'stylesheet' || ($i->attr('type') // '') eq 'text/css' || ($i->attr('href') // '') =~ m/.css$/) {
+        $self->_report_warning({ info => 'Unexpected reference to remote stylesheet was not inlined' });
+        last;
+      }
     }
 
     my $body = $self->_html_tree->look_down('_tag', 'body');
