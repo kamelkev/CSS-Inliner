@@ -2,7 +2,7 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-our $VERSION = '3934';
+our $VERSION = '3935';
 
 use Carp;
 
@@ -628,7 +628,13 @@ sub _expand_stylesheet {
   }
 
   foreach my $i (@link) {
-    next unless ($i->attr('rel') // '') eq 'stylesheet' || ($i->attr('type') // '') eq 'text/css' || ($i->attr('href') // '') =~ m/.css$/;
+    # determine attribute values for the link tag, assign some defaults to avoid comparison warnings later
+    my $rel = defined($i->attr('rel')) ? $i->attr('rel') : '';
+    my $type = defined($i->attr('type')) ? $i->attr('type') : '';
+    my $href = defined($i->attr('href')) ? $i->attr('href') : '';
+
+    # if we don't match the signature of an inlineable stylesheet, skip over
+    next unless (($rel eq 'stylesheet') || ($type eq 'text/css') || ($href =~ m/\.css$/));
 
     my ($content,$baseref) = $self->_fetch_url({ url => $i->attr('href') });
 

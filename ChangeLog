@@ -164,3 +164,7 @@
 3934	2013-12-17	Kevin Kamel <kamelkev@mailermailer.com>
 	* Work around pod bug that was causing some problems for users
 	* Fix issue whereby <link> references that were not inlined weren't generating a content warning 
+
+3935	2013-12-19	Kevin Kamel <kamelkev@mailermailer.com>
+	* Fix problem with stylesheet fingerprint in link tags - regex was not correct
+	* Fix issue whereby I used modern perl // (defined test) doesn't work in perl 5.8.9
