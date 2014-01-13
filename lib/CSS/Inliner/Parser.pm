@@ -178,7 +178,7 @@ sub read {
     my @tokens = grep { /\S/ } (split /(?<=\})/, $string);
     while ($_ = shift @tokens) {
       if ( /^\s*\@media/ ) {
-        while (shift(@tokens) !~ /^\s*\}\s*$/) { }; # discard all @media query subrules
+        for (my $mtoken = shift(@tokens); defined($mtoken) && $mtoken !~ /^\s*\}\s*$/; $mtoken = shift(@tokens)) { }  # discard all @media query subrules
         next;
       }
 

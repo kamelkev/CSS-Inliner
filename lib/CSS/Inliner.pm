@@ -2,7 +2,7 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-our $VERSION = '3935';
+our $VERSION = '3936';
 
 use Carp;
 
@@ -709,9 +709,13 @@ sub _validate_html {
     my @link = $validator_tree->look_down('_tag','link','href',qr/./);
 
     foreach my $i (@link) {
+      my $rel = defined($i->attr('rel')) && $i->attr('rel') ? $i->attr('rel') : '';
+      my $type = defined($i->attr('type')) && $i->attr('type') ? $i->attr('type') : '';
+      my $href = defined($i->attr('href')) && $i->attr('href') ? $i->attr('href') : '';
+
       # link references to stylesheets at this point in the workflow means the caller is doing something improper
       # currently such references are only chased down if you fetch a document, not if you feed one in
-      if (($i->attr('rel') // '') eq 'stylesheet' || ($i->attr('type') // '') eq 'text/css' || ($i->attr('href') // '') =~ m/.css$/) {
+      if ($rel eq 'stylesheet' || $type eq 'text/css' || $href =~ m/.css$/) {
         $self->_report_warning({ info => 'Unexpected reference to remote stylesheet was not inlined' });
         last;
       }

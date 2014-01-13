@@ -168,3 +168,8 @@
 3935	2013-12-19	Kevin Kamel <kamelkev@mailermailer.com>
 	* Fix problem with stylesheet fingerprint in link tags - regex was not correct
 	* Fix issue whereby I used modern perl // (defined test) doesn't work in perl 5.8.9
+
+3936	2013-01-13	Kevin Kamel <kamelkev@mailermailer.com>
+	* Fix issue whereby malformed @media rules could cause an infinite loop within the Parser
+	* Attempt to fix issue whereby moder perl // defined test still not working perl
+	* Attempt to fix issue whereby Makefile will not properly generate the latest README file

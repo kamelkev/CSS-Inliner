@@ -1,7 +1,10 @@
 use ExtUtils::MakeMaker;
 
+my $pkg = 'CSS::Inliner';
+my $module = 'lib/CSS/Inliner.pm';
+
 WriteMakefile(
-    NAME => 'CSS::Inliner',
+    NAME => $pkg,
     PMLIBDIRS => [ 'lib' ],
     PREREQ_PM => {
 	'HTML::TreeBuilder' => 5.03,
@@ -13,17 +16,16 @@ WriteMakefile(
     'test' => {
 	TESTS => join(' ', map { glob } qw( t/*.t )),
     },
-    VERSION_FROM => 'lib/CSS/Inliner.pm',
+    VERSION_FROM => $module,
     AUTHOR => 'Kevin Kamel <kamelkev@mailermailer.com>',
     ABSTRACT => 'Library for converting CSS <style> blocks to inline styles',
     LICENSE => 'perl',
 );
 
 sub MY::postamble {
-  return <<'MAKE_FRAG';
-all :: README
+  package MY;
 
-README: lib/CSS/Inliner.pm
-	pod2text $> > README
-MAKE_FRAG
+  my $postamble = "all :: README\n\nREADME: $module\n\tpod2text $module > README";
+
+  return $postamble;
 }
