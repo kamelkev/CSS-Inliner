@@ -2,7 +2,7 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-our $VERSION = '3936';
+our $VERSION = '3937';
 
 use Carp;
 
@@ -287,10 +287,9 @@ sub inlinify {
     my %matched_elements;
     my $count = 0;
 
-    foreach my $entry (@{$self->_css->get_entries()}) {
-
-      my $selector = $$entry{selector};
-      my $properties = $$entry{properties};
+    foreach my $entry (@{$self->_css->get_rules({ name => 'qualified' })}) {
+      my $selector = $$entry{prelude};
+      my $properties = $$entry{block};
 
       #skip over the following psuedo selectors, these particular ones are not inlineable
       if ($selector =~ /(?:^|[\w\*]):(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter))\b/io) {

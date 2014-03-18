@@ -1,4 +1,4 @@
-# Copyright 2011 MailerMailer, LLC - http://www.mailermailer.com
+# Copyright 2014 MailerMailer, LLC - http://www.mailermailer.com
 #
 # Based in large part on the CSS::Tiny CPAN Module
 # http://search.cpan.org/~adamk/CSS-Tiny/
@@ -88,12 +88,12 @@ sub new {
 
   my $class = ref($proto) || $proto;
 
-  my $entries = [];
+  my $rules = [];
   my $selectors = {};
 
   my $self = {
               stylesheet => undef,
-              ordered => $entries,
+              ordered => $rules,
               selectors => $selectors,
               content_warnings => undef,
               warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0
@@ -176,49 +176,72 @@ sub read {
 
     # Split into styles
     my @tokens = grep { /\S/ } (split /(?<=\})/, $string);
-    while ($_ = shift @tokens) {
-      if ( /^\s*\@media/ ) {
-        for (my $mtoken = shift(@tokens); defined($mtoken) && $mtoken !~ /^\s*\}\s*$/; $mtoken = shift(@tokens)) { }  # discard all @media query subrules
-        next;
-      }
+    while (my $token = shift @tokens) {
+      if ($token =~ /^\s*@[\w-]+\s+(?:url\()?"/) {
+        my $atrule = $token;
 
-      unless ( /^\s*([^{]+?)\s*\{(.*)\}\s*$/ ) {
+        $atrule =~ /^\s*(@[\w-]+)\s*((?:url\()?"[^;]*;)(.*)/;
+
+        $self->add_rule({ name => $1, prelude => $2, block => undef });
+
+        unshift(@tokens, $3);
+      }
+      elsif ($token =~ /^\s*@[\w-]+\s+{\s*[^{]*}$/) {
+        my $atrule = $token;
+        
+        $atrule =~ /^\s*(@[\w-]+)\s+{\s*([^{]*)}$/;
+
+        $self->add_rule({ name => $1, prelude => undef, block => $2 });
+      }
+      elsif ($token =~ /^\s*\@/) {
+        my $atrule = $token;
+
+        for (my $attoken = shift(@tokens); defined($attoken); $attoken = shift(@tokens)) {
+          $atrule .= "\n$attoken\n";
+
+          last if ($attoken =~ /^\s*\}\s*$/); 
+        }
+
+        $atrule =~ /^\s*(@[\w-]+)\s*([^{]*){\s*(.*?})$/ms;
+
+        $self->add_rule({ name => $1, prelude => $2, block => $3 });
+      }
+      elsif ($token =~ /^\s*([^{]+?)\s*{\s*(.*)}\s*$/) {
+        # Split in such a way as to support grouped styles
+        my $rule = $1;
+        my $props = $2;
+
+        $rule =~ s/\s{2,}/ /g;
+
+        # Split into properties
+        my $properties = {};
+        foreach (grep { /\S/ } split /\;/, $props) {
+          # skip over browser specific properties
+          if ((/^\s*[\*\-\_]/) || (/\\/)) {
+            next; 
+          }
+
+          # check if properties are valid, reporting error as configured        
+          unless (/^\s*([\w._-]+)\s*:\s*(.*?)\s*$/) {
+            $self->_report_warning({ info => "Invalid or unexpected property '$_' in style '$rule'" });
+            next;
+          }
+
+          #store the property for later
+          $$properties{lc $1} = $2;
+        }
+
+        my @selectors = split /,/, $rule; # break the rule into the component selector(s)
+
+        #apply the found rules to each selector
+        foreach my $selector (@selectors) {
+          $selector =~ s/^\s+|\s+$//g;
+
+          $self->add_rule({ name => 'qualified', prelude => $selector, block => $properties });
+        }
+      }
+      else {
         $self->_report_warning({ info => "Invalid or unexpected style data '$_'" });
-        next;
-      }
-
-      # Split in such a way as to support grouped styles
-      my $rule = $1;
-      my $props = $2;
-
-      $rule =~ s/\s{2,}/ /g;
-
-      # Split into properties
-      my $properties = {};
-      foreach ( grep { /\S/ } split /\;/, $props ) {
-
-        # skip over browser specific properties
-        if ((/^\s*[\*\-\_]/) || (/\\/)) {
-          next; 
-        }
-
-        # check if properties are valid, reporting error as configured        
-        unless ( /^\s*([\w._-]+)\s*:\s*(.*?)\s*$/ ) {
-          $self->_report_warning({ info => "Invalid or unexpected property '$_' in style '$rule'" });
-          next;
-        }
-
-        #store the property for later
-        $$properties{lc $1} = $2;
-      }
-
-      my @selectors = split /,/, $rule; # break the rule into the component selector(s)
-
-      #apply the found rules to each selector
-      foreach my $selector (@selectors) {
-        $selector =~ s/^\s+|\s+$//g;
-
-        $self->add_entry({selector => $selector, properties => $properties});
       }
     }
   }
@@ -265,6 +288,9 @@ sub write_file {
 
 Write the parsed and manipulated CSS out to a scalar and return it
 
+This code makes some assumptions about the nature of the prelude and data portions of the stored css rules
+and possibly is insufficient.
+
 =cut
 
 sub write {
@@ -274,17 +300,38 @@ sub write {
 
   my $contents = '';
 
-  foreach my $entry ( @{$self->_ordered()} ) {
-
-    #grab the properties that make up this particular selector
-    my $properties = $$entry{properties};
-    my $selector = $$entry{selector};
-
-    $contents .= "$selector {\n";
-    foreach my $property ( sort keys %{ $properties } ) {
-      $contents .= "\t" . lc($property) . ": ".$properties->{$property}. ";\n";
+  foreach my $rule ( @{$self->_ordered()} ) {
+    unless ($$rule{name} && $$rule{prelude}) {
+      $self->_report_warning({ info => "Unrecognized css rule found while generating composite stylesheet" });
     }
-    $contents .= "}\n";
+
+    if ($$rule{name} eq 'qualified') {
+      #grab the properties that make up this particular selector
+      my $selector = $$rule{prelude};
+      my $properties = $$rule{block};
+
+      $contents .= "$selector {\n";
+      foreach my $property ( sort keys %{ $properties } ) {
+        $contents .= "\t" . lc($property) . ": ".$properties->{$property}. ";\n";
+      }
+      $contents .= "}\n";
+    }
+    elsif ($$rule{name} && $$rule{prelude} && $$rule{block}) {
+      $$rule{block} =~ s/([;{])\s*([^;{])/$1\n$2/g; # attempt to restrict whitespace
+
+      $contents .= $$rule{name} . " " . $$rule{prelude}  . "{\n" . $$rule{block} . "\n}\n";
+    }
+    elsif ($$rule{name} && $$rule{prelude}) {
+      $contents .= $$rule{name} . " " . $$rule{prelude} . "\n";
+    }
+    elsif ($$rule{name} && $$rule{block}) {
+      $$rule{block} =~ s/;\s*([\w-]+)/;\n$1/g; # attempt to restrict whitespace
+
+      $contents .= $$rule{name} . " {\n" . $$rule{block} . "\n}\n";
+    }
+    else {
+      $self->_report_warning({ info => "Invalid or unexpected rule encountered while writing out stylesheet" });
+    }
   }
 
   return $contents;
@@ -320,48 +367,83 @@ sub content_warnings {
 
 =pod
 
-=item get_entries( params )
+=item get_rules( params )
 
-Get an array of entries representing the composition of the stylesheet. These entries
+Get an array of rules representing the composition of the stylesheet. These rules
 are returned in the exact order that they were discovered.
 
-An entry is composed of a hash with a structure like the following:
+A rule is composed of a hash with a structure like the following:
+$rule = { name => 'qualified', prelude => '.my_selector', block => { attribute => 'value' } }
 
-$entry = { selector => '.my_selector', properties => { attribute => 'value' } }
+This method takes an optional name argument which will return back rules of a specific
+rule type. For example to return back a list of qualified rules one call this method like:
+$self->get_rules({ name => 'qualified' });
 
 =cut
 
-sub get_entries {
+sub get_rules {
   my ($self,$params) = @_;
 
   $self->_check_object();
 
-  return $self->_ordered();
+  my $rules = [];
+  if (exists $$params{name} && $$params{name}) {
+    foreach my $rule (@{$self->_ordered()}) {
+      if ($$rule{name} eq $$params{name}) {
+        push @{$rules}, $rule;
+      }
+    }
+  }
+  else {
+    $rules = $self->_ordered();
+  }
+
+  return $rules;
 }
 
 =pod
 
-=item add_entry( params )
+=item add_rule( params )
 
-Add an entry containing a selector and associated properties to the stored rulesets
+Add a CSS rule to the stored rulesets. CSS rule are well defined within the various W3 specifications, this implementation
+attempts to facilitate collection of data associated with generic CSS rules.
 
-This method requires you to pass in a params hash that contains scalar
-css data. For example:
+Generic CSS rules are composed of 2 general types of rules, qualified rules and at-rules. The data associated with each of
+these rules is diverse, but fits a tight convention. Specifically any CSS rule will have a name, a prelude, and possibly an
+associated data block.
 
-$self->add_entry({selector => '.foo', properties => {color => 'red' }});
+The most common type of CSS rule is a qualified rule. This term became more prominent with the rise of CSS3, but is still
+relevant when handling earlier versions of the standard. These rules have a prelude consisting of a CSS selector, along
+with a data block consisting of a series of CSS properties.
+
+The less common variants of CSS rules are know as at-rules. These rules implement various behaviours through various 
+permutations of the CSS name, prelude and data block. The standard is evolving here, so it is not easy to enumerate such examples,
+so this method broadly accepts rules of these types.
+
+Adding a qualified rule is trivial, for example:
+$self->add_rule({ name => 'qualified', prelude => 'p > a', block => 'color: blue;' });
+
+At rules are a little more complex, an example:
+$self->add_rule({ name => '@media', prelude => 'print', block => 'body { font-size: 10pt; }' });
 
 =cut
 
-sub add_entry {
+sub add_rule {
   my ($self,$params) = @_;
 
   $self->_check_object();
 
-  my $entry = { selector => $$params{selector}, properties => $$params{properties} };
+  my $rule;
+  if (exists $$params{name} && exists $$params{prelude} && exists $$params{block}) { 
+    $rule = { name => $$params{name}, prelude => $$params{prelude}, block => $$params{block} };
 
-  push @{$self->_ordered()}, $entry;
+    push @{$self->_ordered()}, $rule;
+  }
+  else {
+    $self->_report_warning({ info => "Invalid or unexpected data '$_' encountered while trying to add stylesheet rule" });
+  }
 
-  return $entry;
+  return $rule;
 }
 
 ####################################################################

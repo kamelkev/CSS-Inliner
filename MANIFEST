@@ -8,6 +8,7 @@ README
 t/acidtest.t
 t/advanced.t
 t/advanced_strip.t
+t/atrules.t
 t/basic.t
 t/basic_comment.t
 t/basic_media.t
@@ -21,6 +22,8 @@ t/fetch-filter.perl
 t/fetch.perl
 t/html/acidtest.html
 t/html/acidtest_result.html
+t/html/atrulestest.html
+t/html/atrulestest_result.html
 t/html/embedded_style.html
 t/html/embedded_style_result.html
 t/html/encoding.html
