@@ -18,7 +18,7 @@ open( my $fh, $result_file ) or die "can't open $result_file: $!!\n";
 my $correct_result = do { local( $/ ) ; <$fh> } ;
 
 my $inliner = CSS::Inliner->new();
-$inliner->read_file({filename => $test_file, charset => 'utf8'});
+$inliner->read_file({ filename => $test_file, charset => 'utf8' });
 my $inlined = $inliner->inlinify();
 
 ok($inlined eq $correct_result, 'result was correct');

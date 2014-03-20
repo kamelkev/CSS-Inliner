@@ -39,7 +39,7 @@ my $html = <<'END';
 END
 
 my $inliner = CSS::Inliner->new();
-$inliner->read({html => $html});
+$inliner->read({ html => $html });
 my $inlined = $inliner->inlinify();
 
 
@@ -94,7 +94,7 @@ $html = <<'END';
 END
 
 $inliner = CSS::Inliner->new();
-$inliner->read({html => $html});
+$inliner->read({ html => $html });
 $inlined = $inliner->inlinify();
 
 ok($inlined =~ m/<h1 class="alert cool" id="title" style="color: red; font-size: 25px; font-weight: 900;">Lorem ipsum/, 'cascading rules for h1.alert.cool inlined');

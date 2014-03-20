@@ -10,10 +10,10 @@ use_ok('CSS::Inliner::Parser');
 my $simple = CSS::Inliner::Parser->new();
 
 #test creation of empty selector
-$simple->add_entry({selector => '.empty', properties => {}});
+$simple->add_rule({ name => 'qualified', prelude => '.empty', block => {} });
 
 #test creation of initialized selector
-$simple->add_entry({selector => '.bar', properties => { color => 'blue', 'font-size' => '16px'}});
+$simple->add_rule({ name => 'qualified', prelude => '.bar', block => { color => 'blue', 'font-size' => '16px'} });
 
 my $ordered = $simple->write();
 

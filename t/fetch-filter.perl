@@ -8,7 +8,7 @@ use CSS::Inliner;
 my $url = shift || 'http://www.cpan.org/index.html';
 
 my $inliner = CSS::Inliner->new({ post_fetch_filter => \&post_fetch_filter });
-$inliner->fetch_file({url => $url});
+$inliner->fetch_file({ url => $url });
 my $inlined = $inliner->inlinify();
 
 warn "================ FINAL HTML ===============";

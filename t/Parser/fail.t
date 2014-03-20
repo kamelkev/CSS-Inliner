@@ -23,7 +23,7 @@ END
 my $fatal = CSS::Inliner::Parser->new({ warns_as_errors => 1 });
 
 eval {
-  $fatal->read({css => $css});
+  $fatal->read({ css => $css });
 };
 
 ok($@ =~ /^Invalid or unexpected property/);
@@ -34,7 +34,7 @@ ok($@ =~ /^Invalid or unexpected property/);
 my $suppressed = CSS::Inliner::Parser->new();
 
 eval {
-  $suppressed->read({css => $css});
+  $suppressed->read({ css => $css });
 };
 
 @warnings = @{$suppressed->content_warnings()};
@@ -46,7 +46,7 @@ ok($warnings[0] =~ /^Invalid or unexpected property/);
 my $fatal = CSS::Inliner::Parser->new();
 
 eval {
-  $fatal->read({css => $css});
+  $fatal->read({ css => $css });
 };
 
 ok($@ eq '');

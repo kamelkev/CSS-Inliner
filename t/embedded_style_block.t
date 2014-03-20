@@ -18,7 +18,7 @@ open( my $fh, $result_file ) or die "can't open $result_file: $!!\n";
 my $correct_result = do { local( $/ ) ; <$fh> } ;
 
 my $inliner = CSS::Inliner->new();
-$inliner->fetch_file({url => $test_url});
+$inliner->fetch_file({ url => $test_url });
 my $inlined = $inliner->inlinify();
 
 ok($inlined eq $correct_result, 'result was correct');

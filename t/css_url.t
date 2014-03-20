@@ -23,11 +23,11 @@ my $input = <<IN;
 </html>
 IN
 
-$inliner->read({html => $input});
+$inliner->read({ html => $input });
 
 my $actual = $inliner->inlinify();
 
-ok  ($actual =~ m{url\(http://www.example.com/test.jpg\)}, 'url in style');
+ok ($actual =~ m{url\(http://www.example.com/test.jpg\)}, 'url in style');
 
 done_testing;
 

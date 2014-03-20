@@ -31,7 +31,7 @@ END
 my $html_tree = HTML::TreeBuilder->new();
 $html_tree->ignore_unknown(1);
 my $inliner = CSS::Inliner->new({ html_tree => $html_tree });
-$inliner->read({html => $html});
+$inliner->read({ html => $html });
 my $inlined = $inliner->inlinify();
 
 ok($inlined =~ m/<h1 style="color: red; font-size: 20px;">Howdy!<\/h1>/, 'h1 rule inlined');
@@ -40,7 +40,7 @@ ok($inlined !~ m/<foo>/, 'ignoring unknown elements');
 
 $html_tree->ignore_unknown(0);
 $inliner = CSS::Inliner->new({ html_tree => $html_tree });
-$inliner->read({html => $html});
+$inliner->read({ html => $html });
 $inlined = $inliner->inlinify();
 
 ok($inlined =~ m/<h1 style="color: red; font-size: 20px;">Howdy!<\/h1>/, 'custom html_tree: h1 rule inlined');

@@ -30,7 +30,7 @@ my $html = <<END;
 END
 
 my $inliner = CSS::Inliner->new({ leave_style => 1 });
-$inliner->read({html => $html});
+$inliner->read({ html => $html });
 my $inlined = $inliner->inlinify();
 
 ok($inlined =~ m/<h1 class="one" style="color: red; font-size: 20px;">Howdy!<\/h1>/, 'h1 rule inlined');

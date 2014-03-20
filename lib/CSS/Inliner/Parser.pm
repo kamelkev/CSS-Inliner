@@ -119,7 +119,7 @@ necessary for later manipulation.
 This method requires you to pass in a params hash that contains a
 filename argument. For example:
 
-$self->read_file({filename => 'myfile.css'});
+$self->read_file({ filename => 'myfile.css' });
 
 =cut
 
@@ -135,7 +135,7 @@ sub read_file {
   open FILE, "<", $$params{filename} or croak $!;
   my $css = do { local( $/ ) ; <FILE> } ;
 
-  $self->read({css => $css});
+  $self->read({ css => $css });
 
   return();
 }
@@ -153,7 +153,7 @@ rules themselves should apply as expected.
 This method requires you to pass in a params hash that contains scalar
 css data. For example:
 
-$self->read({css => $css});
+$self->read({ css => $css });
 
 =cut
 
@@ -261,7 +261,7 @@ Write the parsed and manipulated CSS out to a file parameter
 This method requires you to pass in a params hash that contains a
 filename argument. For example:
 
-$self->write_file({filename => 'myfile.css'});
+$self->write_file({ filename => 'myfile.css' });
 
 =cut
 

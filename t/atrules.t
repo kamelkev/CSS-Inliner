@@ -21,7 +21,7 @@ open( my $fh2, $result_file ) or die "can't open $result_file: $!!\n";
 my $correct_result = do { local( $/ ) ; <$fh2> } ;
 
 my $inliner = CSS::Inliner->new({ leave_style => 1 });
-$inliner->read({html => $html});
+$inliner->read({ html => $html });
 
 my $inlined = $inliner->inlinify();
 

@@ -37,7 +37,7 @@ END
 
 my $simple = CSS::Inliner::Parser->new();
 
-$simple->read({css => $css});
+$simple->read({ css => $css });
 
 my $ordered = $simple->write();
 

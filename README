@@ -7,7 +7,7 @@ SYNOPSIS
 
     my $inliner = new Inliner();
 
-    $inliner->read_file({filename => 'myfile.html'});
+    $inliner->read_file({ filename => 'myfile.html' });
 
     print $inliner->inlinify();
 
@@ -61,12 +61,12 @@ METHODS
         This method requires you to pass in a params hash that contains a
         filename argument. For example:
 
-        $self->read_file({filename => 'myfile.html'});
+        $self->read_file({ filename => 'myfile.html' });
 
         Additionally you can specify the character encoding within the file,
         for example:
 
-        $self->read_file({filename => 'myfile.html', charset => 'utf8'});
+        $self->read_file({ filename => 'myfile.html', charset => 'utf8' });
 
     read
         Reads passed html data and parses it. The intermediate data is
@@ -78,7 +78,7 @@ METHODS
         This method requires you to pass in a params hash that contains
         scalar html data. For example:
 
-        $self->read({html => $html});
+        $self->read({ html => $html });
 
         NOTE: You are required to pass a properly encoded perl reference to
         the html data. This method does *not* do the dirty work of encoding

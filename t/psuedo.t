@@ -32,7 +32,7 @@ my $html1 = <<END;
 END
 
 my $inliner = CSS::Inliner->new();
-$inliner->read({html => $html1});
+$inliner->read({ html => $html1 });
 my $inlined1 = $inliner->inlinify();
 
 ok($inlined1, 'Leading whitespace psuedo rule processed correctly');
@@ -51,7 +51,7 @@ my $html2 = <<END;
 </html>
 END
 
-$inliner->read({html => $html2});
+$inliner->read({ html => $html2 });
 my $inlined2 = $inliner->inlinify();
 
 ok($inlined2, 'No whitespace psuedo rule processed correctly');

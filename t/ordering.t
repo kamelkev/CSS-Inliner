@@ -29,7 +29,7 @@ my $html = <<END;
 END
 
 my $inliner = CSS::Inliner->new();
-$inliner->read({html => $html});
+$inliner->read({ html => $html });
 my $css = $inliner->_css();
 
 #shuffle stored styles around

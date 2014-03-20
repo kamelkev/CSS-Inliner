@@ -34,8 +34,8 @@ my $html = <<'END';
 </html>
 END
 
-my $inliner = CSS::Inliner->new({strip_attrs => 1});
-$inliner->read({html => $html});
+my $inliner = CSS::Inliner->new({ strip_attrs => 1 });
+$inliner->read({ html => $html });
 my $inlined = $inliner->inlinify();
 
 ok($inlined =~ m/<h1 style="color: red; font-size: 20px;">Lorem ipsum/, 'h1.alert rule inlined');

@@ -38,7 +38,7 @@ my $inliner = CSS::Inliner->new();
 
 foreach my $rule (keys %rules) {
   
-  my $weight = $inliner->specificity({selector => $rule});
+  my $weight = $inliner->specificity({ selector => $rule });
 
   is($weight, $rules{$rule}, "correct weight for \"$rule\"");
 }

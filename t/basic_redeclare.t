@@ -43,8 +43,8 @@ my $correct_result = <<'END';
 </html>
 END
 
-my $inliner = CSS::Inliner->new({strip_attrs => 1});
-$inliner->read({html => $html});
+my $inliner = CSS::Inliner->new({ strip_attrs => 1 });
+$inliner->read({ html => $html });
 my $inlined = $inliner->inlinify();
 
 ok($inlined eq $correct_result, 'result was correct');

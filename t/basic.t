@@ -28,7 +28,7 @@ my $html = <<END;
 END
 
 my $inliner = CSS::Inliner->new();
-$inliner->read({html => $html});
+$inliner->read({ html => $html });
 my $inlined = $inliner->inlinify();
 
 ok($inlined =~ m/<h1 style="color: red; font-size: 20px;">Howdy!<\/h1>/, 'h1 rule inlined');

@@ -29,7 +29,7 @@ my $html = <<END;
 END
 
 my $inliner = CSS::Inliner->new();
-$inliner->read({html => $html});
+$inliner->read({ html => $html });
 my $inlined = $inliner->inlinify();
 
 ok($inlined =~ m/\<!-- retain this comment --\>/, 'comment retained');
