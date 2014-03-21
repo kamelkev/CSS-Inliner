@@ -2,7 +2,7 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-our $VERSION = '3938';
+our $VERSION = '3939';
 
 use Carp;
 
@@ -287,9 +287,11 @@ sub inlinify {
     my %matched_elements;
     my $count = 0;
 
-    foreach my $entry (@{$self->_css->get_rules({ name => 'qualified' })}) {
-      my $selector = $$entry{prelude};
-      my $properties = $$entry{block};
+    foreach my $entry (@{$self->_css->get_rules()}) {
+      next unless exists $$entry{selector} && $$entry{declarations};
+
+      my $selector = $$entry{selector};
+      my $declarations = $$entry{declarations};
 
       #skip over the following psuedo selectors, these particular ones are not inlineable
       if ($selector =~ /(?:^|[\w\*]):(?:(active|focus|hover|link|visited|after|before|selection|target|first-line|first-letter))\b/io) {
@@ -328,7 +330,7 @@ sub inlinify {
           element  => $element,
           specificity   => $specificity,
           position => $count,
-          css      => $properties
+          css      => $declarations
          );
 
         push(@{$matched_elements{$element->address()}}, \%match_info);
@@ -354,11 +356,11 @@ sub inlinify {
         %new_style = (%new_style, %{$cur_style});
       }
 
-      $element->attr('style', $self->_expand({ properties => \%new_style }));
+      $element->attr('style', $self->_expand({ declarations => \%new_style }));
     }
 
     #at this point we have a document that contains the expanded inlined stylesheet
-    #BUT we need to collapse the properties to remove duplicate overridden styles
+    #BUT we need to collapse the declarations to remove duplicate overridden styles
     $self->_collapse_inline_styles();
 
     # The entities list is the do-not-encode string from HTML::Entities
@@ -827,10 +829,10 @@ sub _expand {
 
   $self->_check_object();
 
-  my $properties = $$params{properties};
+  my $declarations = $$params{declarations};
   my $inline = '';
-  foreach my $key (keys %{$properties}) {
-    $inline .= $key . ':' . $$properties{$key} . ';';
+  foreach my $property (keys %{$declarations}) {
+    $inline .= $property . ':' . $$declarations{$property} . ';';
   }
 
   return $inline;
@@ -844,7 +846,7 @@ sub _split {
   my $style = $params->{style};
   my %split;
 
-  # Split into properties
+  # Split into properties/values
   foreach ( grep { /\S/ } split /\;/, $style ) {
     unless ( /^\s*([\w._-]+)\s*:\s*(.*?)\s*$/ ) {
       $self->_report_warning({ info => "Invalid or unexpected property '$_' in style '$style'" });

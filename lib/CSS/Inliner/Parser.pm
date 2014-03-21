@@ -178,22 +178,26 @@ sub read {
     my @tokens = grep { /\S/ } (split /(?<=\})/, $string);
     while (my $token = shift @tokens) {
       if ($token =~ /^\s*@[\w-]+\s+(?:url\()?"/) {
-        my $atrule = $token;
-
-        $atrule =~ /^\s*(@[\w-]+)\s*((?:url\()?"[^;]*;)(.*)/;
-
-        $self->add_rule({ name => $1, prelude => $2, block => undef });
-
-        unshift(@tokens, $3);
-      }
-      elsif ($token =~ /^\s*@[\w-]+\s+{\s*[^{]*}$/) {
+        # simple at-rules consisting of a rule name and prelude, but no block - we have to jump through some
+        # hoops as we can accidentally capture multi-line rules here. If such a thing happens we capture
+        # any inadvertently trapped content and push it back for parsing later
+        
         my $atrule = $token;
         
-        $atrule =~ /^\s*(@[\w-]+)\s+{\s*([^{]*)}$/;
+        $atrule =~ /^\s*(@[\w-]+)\s*((?:url\()?"[^;]*;)(.*)/;
+        
+        $self->add_at_rule({ type => $1, prelude => $2, block => undef });
+        
+        unshift(@tokens, $3);
+      }
+      elsif ($token =~ /^\s*(\@[\w-]+)\s+{\s*([^{]*)}$/) {
+        # multiline at-rules without a prelude, nothing to protect here
 
-        $self->add_rule({ name => $1, prelude => undef, block => $2 });
+        $self->add_at_rule({ type => $1, prelude => undef, block => $2 });
       }
       elsif ($token =~ /^\s*\@/) {
+        # multiline at-rules with a prelude, nothing to protect here
+
         my $atrule = $token;
 
         for (my $attoken = shift(@tokens); defined($attoken); $attoken = shift(@tokens)) {
@@ -204,10 +208,11 @@ sub read {
 
         $atrule =~ /^\s*(@[\w-]+)\s*([^{]*){\s*(.*?})$/ms;
 
-        $self->add_rule({ name => $1, prelude => $2, block => $3 });
+        $self->add_at_rule({ type => $1, prelude => $2, block => $3 });
       }
       elsif ($token =~ /^\s*([^{]+?)\s*{\s*(.*)}\s*$/) {
         # Split in such a way as to support grouped styles
+
         my $rule = $1;
         my $props = $2;
 
@@ -237,7 +242,7 @@ sub read {
         foreach my $selector (@selectors) {
           $selector =~ s/^\s+|\s+$//g;
 
-          $self->add_rule({ name => 'qualified', prelude => $selector, block => $properties });
+          $self->add_qualified_rule({ selector => $selector, declarations => $properties });
         }
       }
       else {
@@ -301,18 +306,14 @@ sub write {
   my $contents = '';
 
   foreach my $rule ( @{$self->_ordered()} ) {
-    unless ($$rule{name} && $$rule{prelude}) {
-      $self->_report_warning({ info => "Unrecognized css rule found while generating composite stylesheet" });
-    }
-
-    if ($$rule{name} eq 'qualified') {
+    if ($$rule{selector} && $$rule{declarations}) {
       #grab the properties that make up this particular selector
-      my $selector = $$rule{prelude};
-      my $properties = $$rule{block};
+      my $selector = $$rule{selector};
+      my $declarations = $$rule{declarations};
 
       $contents .= "$selector {\n";
-      foreach my $property ( sort keys %{ $properties } ) {
-        $contents .= "\t" . lc($property) . ": ".$properties->{$property}. ";\n";
+      foreach my $property ( sort keys %{ $declarations } ) {
+        $contents .= "\t" . lc($property) . ": ".$$declarations{$property}. ";\n";
       }
       $contents .= "}\n";
     }
@@ -370,14 +371,13 @@ sub content_warnings {
 =item get_rules( params )
 
 Get an array of rules representing the composition of the stylesheet. These rules
-are returned in the exact order that they were discovered.
+are returned in the exact order that they were discovered. Both qualified and at
+rules are returned by this method. It is left to the caller to pull out the kinds of
+rules your application needs to accomplish your goals.
 
-A rule is composed of a hash with a structure like the following:
-$rule = { name => 'qualified', prelude => '.my_selector', block => { attribute => 'value' } }
+The structures returned match up with the fields set while adding the rules via the add_x_rule collection methods.
 
-This method takes an optional name argument which will return back rules of a specific
-rule type. For example to return back a list of qualified rules one call this method like:
-$self->get_rules({ name => 'qualified' });
+Specifically at-rules will contain a type, prelude and block while qualified rules will contain a selector and declarations.
 
 =cut
 
@@ -386,57 +386,66 @@ sub get_rules {
 
   $self->_check_object();
 
-  my $rules = [];
-  if (exists $$params{name} && $$params{name}) {
-    foreach my $rule (@{$self->_ordered()}) {
-      if ($$rule{name} eq $$params{name}) {
-        push @{$rules}, $rule;
-      }
-    }
-  }
-  else {
-    $rules = $self->_ordered();
-  }
-
-  return $rules;
+  return $self->_ordered();
 }
 
 =pod
 
-=item add_rule( params )
+=item add_qualified_rule( params )
 
-Add a CSS rule to the stored rulesets. CSS rule are well defined within the various W3 specifications, this implementation
-attempts to facilitate collection of data associated with generic CSS rules.
-
-Generic CSS rules are composed of 2 general types of rules, qualified rules and at-rules. The data associated with each of
-these rules is diverse, but fits a tight convention. Specifically any CSS rule will have a name, a prelude, and possibly an
-associated data block.
+Add a qualified CSS rule to the ruleset store.
 
 The most common type of CSS rule is a qualified rule. This term became more prominent with the rise of CSS3, but is still
 relevant when handling earlier versions of the standard. These rules have a prelude consisting of a CSS selector, along
-with a data block consisting of a series of CSS properties.
-
-The less common variants of CSS rules are know as at-rules. These rules implement various behaviours through various 
-permutations of the CSS name, prelude and data block. The standard is evolving here, so it is not easy to enumerate such examples,
-so this method broadly accepts rules of these types.
+with a data block consisting of various rule declarations.
 
 Adding a qualified rule is trivial, for example:
-$self->add_rule({ name => 'qualified', prelude => 'p > a', block => 'color: blue;' });
-
-At rules are a little more complex, an example:
-$self->add_rule({ name => '@media', prelude => 'print', block => 'body { font-size: 10pt; }' });
+$self->add_qualified_rule({ selector => 'p > a', block => 'color: blue;' });
 
 =cut
 
-sub add_rule {
+sub add_qualified_rule {
   my ($self,$params) = @_;
 
   $self->_check_object();
 
   my $rule;
-  if (exists $$params{name} && exists $$params{prelude} && exists $$params{block}) { 
-    $rule = { name => $$params{name}, prelude => $$params{prelude}, block => $$params{block} };
+  if (exists $$params{selector} && exists $$params{declarations}) { 
+    $rule = { selector => $$params{selector}, declarations => $$params{declarations} };
 
+    push @{$self->_ordered()}, $rule;
+  }
+  else {
+    $self->_report_warning({ info => "Invalid or unexpected data '$_' encountered while trying to add stylesheet rule" });
+  }
+
+  return $rule;
+}
+
+=pod
+
+=item add_at_rule( params )
+
+Add an at-rule to the ruleset store.
+
+The less common variants of CSS rules are know as at-rules. These rules implement various behaviours through various expressions
+containing a rule type, prelude and associated data block. The standard is evolving here, so it is not easy to enumerate such
+examples, but these rules always start with @.
+
+At rules are a little more complex, an example:
+$self->add_at_rule({ type => '@media', prelude => 'print', block => 'body { font-size: 10pt; }' });
+
+=cut
+
+sub add_at_rule {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  my $rule;
+  if (exists $$params{type} && exists $$params{prelude} && exists $$params{block}) {
+    $rule = { type => $$params{type}, prelude => $$params{prelude}, block => $$params{block} };
+    
     push @{$self->_ordered()}, $rule;
   }
   else {

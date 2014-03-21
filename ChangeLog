@@ -184,3 +184,7 @@
 3938	2013-03-20	Kevin Kamel <kamelkev@mailermailer.com>
 	* Fix up code style whitespace issues
 	* Fix Parser tests that were no longer passing due to earlier changes
+
+3939	2013-03-20	Kevin Kamel <kamelkev@mailermailer.com>
+	* Rework the handling of qualified and at rules
+	* Update tests appropriately to make sure things continue to work as expected
