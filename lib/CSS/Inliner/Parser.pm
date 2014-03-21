@@ -317,18 +317,18 @@ sub write {
       }
       $contents .= "}\n";
     }
-    elsif ($$rule{name} && $$rule{prelude} && $$rule{block}) {
+    elsif ($$rule{type} && $$rule{prelude} && $$rule{block}) {
       $$rule{block} =~ s/([;{])\s*([^;{])/$1\n$2/g; # attempt to restrict whitespace
 
-      $contents .= $$rule{name} . " " . $$rule{prelude}  . "{\n" . $$rule{block} . "\n}\n";
+      $contents .= $$rule{type} . " " . $$rule{prelude}  . "{\n" . $$rule{block} . "\n}\n";
     }
-    elsif ($$rule{name} && $$rule{prelude}) {
-      $contents .= $$rule{name} . " " . $$rule{prelude} . "\n";
+    elsif ($$rule{type} && $$rule{prelude}) {
+      $contents .= $$rule{type} . " " . $$rule{prelude} . "\n";
     }
-    elsif ($$rule{name} && $$rule{block}) {
+    elsif ($$rule{type} && $$rule{block}) {
       $$rule{block} =~ s/;\s*([\w-]+)/;\n$1/g; # attempt to restrict whitespace
 
-      $contents .= $$rule{name} . " {\n" . $$rule{block} . "\n}\n";
+      $contents .= $$rule{type} . " {\n" . $$rule{block} . "\n}\n";
     }
     else {
       $self->_report_warning({ info => "Invalid or unexpected rule encountered while writing out stylesheet" });
