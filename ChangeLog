@@ -174,7 +174,7 @@
 	* Attempt to fix issue whereby moder perl // defined test still not working perl
 	* Attempt to fix issue whereby Makefile will not properly generate the latest README file
 
-3940	2013-03-20	Kevin Kamel <kamelkev@mailermailer.com>
+3941	2013-03-20	Kevin Kamel <kamelkev@mailermailer.com>
 	* Add generalized at-rule support to CSS::Inliner::Parser, @media support is reimplemented
 	* Provide granularity for retrieving rules by rule name, exa qualified, @import, @media, etc
 	* Attempt to improve whitespace handling when printing out a stylesheet from CSS::Inliner::Parser

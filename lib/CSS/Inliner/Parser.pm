@@ -206,7 +206,7 @@ sub read {
           last if ($attoken =~ /^\s*\}\s*$/); 
         }
 
-        $atrule =~ /^\s*(@[\w-]+)\s*([^{]*){\s*(.*?})$/ms;
+        $atrule =~ /^\s*(@[\w-]+)\s*([^{]*){\s*(.*?})$/s;
 
         $self->add_at_rule({ type => $1, prelude => $2, block => $3 });
       }
