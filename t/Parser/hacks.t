@@ -9,17 +9,17 @@ use_ok('CSS::Inliner::Parser');
 
 my $css = <<END;
 .foo {
-	*color: red;
+  *color: red;
 }
 .bar {
-	_font-weight: bold;
+  _font-weight: bold;
 }
 .biz {
-	-font-size: 10px;
+  -font-size: 10px;
 }
 .foo2 {
-	w\\idth: 500px;
-	width: 130px;
+  w\\idth: 500px;
+  width: 130px;
 }
 END
 
@@ -31,7 +31,7 @@ my $correct = <<END;
 .biz {
 }
 .foo2 {
-	width: 130px;
+  width: 130px;
 }
 END
 

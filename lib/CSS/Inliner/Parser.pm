@@ -201,9 +201,12 @@ sub read {
         my $atrule = $token;
 
         for (my $attoken = shift(@tokens); defined($attoken); $attoken = shift(@tokens)) {
-          $atrule .= "\n$attoken\n";
-
-          last if ($attoken =~ /^\s*\}\s*$/); 
+          if ($attoken !~ /^\s*\}\s*$/) {
+            $atrule .= "\n$attoken\n";
+          }
+          else {
+            last;
+          }
         }
 
         $atrule =~ /^\s*(@[\w-]+)\s*([^{]*){\s*(.*?})$/s;
@@ -313,12 +316,16 @@ sub write {
 
       $contents .= "$selector {\n";
       foreach my $property ( sort keys %{ $declarations } ) {
-        $contents .= "\t" . lc($property) . ": ".$$declarations{$property}. ";\n";
+        $contents .= "  " . lc($property) . ": ".$$declarations{$property}. ";\n";
       }
       $contents .= "}\n";
     }
     elsif ($$rule{type} && $$rule{prelude} && $$rule{block}) {
-      $$rule{block} =~ s/([;{])\s*([^;{])/$1\n$2/g; # attempt to restrict whitespace
+      $$rule{block} =~ s/([;{])\s*([^;{])/$1\n$2/mg; # attempt to restrict whitespace
+      $$rule{block} =~ s/^\s+//mg;
+      $$rule{block} =~ s/[^\S\r\n]+/ /mg;
+      $$rule{block} =~ s/([\w-]+:)/  $1/mg;
+      $$rule{block} =~ s/^/  /mg;
 
       $contents .= $$rule{type} . " " . $$rule{prelude}  . "{\n" . $$rule{block} . "\n}\n";
     }
