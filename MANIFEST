@@ -22,8 +22,8 @@ t/fetch-filter.perl
 t/fetch.perl
 t/html/acidtest.html
 t/html/acidtest_result.html
-t/html/atrulestest.html
-t/html/atrulestest_result.html
+t/html/atruletest.html
+t/html/atruletest_result.html
 t/html/embedded_style.html
 t/html/embedded_style_result.html
 t/html/encoding.html
@@ -40,6 +40,7 @@ t/linebreaktest.t
 t/linktest.t
 t/mediaquery.t
 t/ordering.t
+t/Parser/atrules.t
 t/Parser/basic.t
 t/Parser/create.t
 t/Parser/fail.t
