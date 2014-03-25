@@ -322,9 +322,9 @@ sub write {
     }
     elsif ($$rule{type} && $$rule{prelude} && $$rule{block}) {
       $$rule{block} =~ s/([;{])\s*([^;{])/$1\n$2/mg; # attempt to restrict whitespace
-      $$rule{block} =~ s/^\s+//mg;
+      $$rule{block} =~ s/^\s+|\s+$//mg;
       $$rule{block} =~ s/[^\S\r\n]+/ /mg;
-      $$rule{block} =~ s/([\w-]+:)/  $1/mg;
+      $$rule{block} =~ s/^([\w-]+:)/  $1/mg;
       $$rule{block} =~ s/^/  /mg;
 
       $contents .= $$rule{type} . " " . $$rule{prelude}  . "{\n" . $$rule{block} . "\n}\n";
@@ -333,7 +333,10 @@ sub write {
       $contents .= $$rule{type} . " " . $$rule{prelude} . "\n";
     }
     elsif ($$rule{type} && $$rule{block}) {
-      $$rule{block} =~ s/;\s*([\w-]+)/;\n$1/g; # attempt to restrict whitespace
+      $$rule{block} =~ s/;\s*([\w-]+)/;\n$1/mg; # attempt to restrict whitespace
+      $$rule{block} =~ s/^\s+|\s+$//mg;
+      $$rule{block} =~ s/[^\S\r\n]+/ /mg;
+      $$rule{block} =~ s/([\w-]+:)/  $1/mg;
 
       $contents .= $$rule{type} . " {\n" . $$rule{block} . "\n}\n";
     }

@@ -14,7 +14,7 @@ WriteMakefile(
         'Test::More' => 0
     },
     'test' => {
-	TESTS => join(' ', map { glob } qw( t/*.t )),
+	TESTS => join(' ', map { glob } qw( t/*.t t/*/*.t )),
     },
     VERSION_FROM => $module,
     AUTHOR => 'Kevin Kamel <kamelkev@mailermailer.com>',

@@ -21,8 +21,8 @@ my $expected = <<END;
 .empty {
 }
 .bar {
-	color: blue;
-	font-size: 16px;
+  color: blue;
+  font-size: 16px;
 }
 END
 
