@@ -11,7 +11,7 @@ use FindBin qw($Bin);
 plan(tests => 1);
 
 my $html_path = "$Bin/html/";
-my $test_url = 'http://rawgithub.com/kamelkev/CSS-Inliner/master/t/html/embedded_style.html';
+my $test_url = 'http://rawgit.com/kamelkev/CSS-Inliner/master/t/html/embedded_style.html';
 my $result_file = $html_path . 'embedded_style_result.html';
 
 open( my $fh, $result_file ) or die "can't open $result_file: $!!\n";

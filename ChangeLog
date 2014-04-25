@@ -182,3 +182,6 @@
 	* Add support for including at-rule when printing out a stylesheet from CSS::Inliner::Parser
         * Add tests for ensuring that at-rule are working
 	* Fix up code style whitespace issues, add associated tests for checking it
+
+3945	2013-04-25	Kevin Kamel <kamelkev@mailermailer.com>
+	* Updated embedded test, which references a remote uri that was no longer accessible
