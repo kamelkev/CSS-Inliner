@@ -185,3 +185,12 @@
 
 3945	2013-04-25	Kevin Kamel <kamelkev@mailermailer.com>
 	* Updated embedded test, which references a remote uri that was no longer accessible
+
+394x	2014-08-27	Kevin Kamel <kamelkev@mailermailer.com>
+	* Updated handling of pseudo-classes
+		- correct issue raised in CPAN RT96413, errors incorrectly bubbling from HTML::Query
+		- update regex to properly target all unsupported pseudo-selectors
+		- update regex to skip over CSS3 style pseudo-selectors as well as CSS2
+		- update tests to properly exercise associated changes
+	* Rename test psuedo.t to pseudo.t (spelling)
+	* Bump up HTML::Query requirement to 0.09
