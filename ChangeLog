@@ -186,7 +186,7 @@
 3945	2013-04-25	Kevin Kamel <kamelkev@mailermailer.com>
 	* Updated embedded test, which references a remote uri that was no longer accessible
 
-3947	2014-08-27	Kevin Kamel <kamelkev@mailermailer.com>
+3948	2014-09-02	Kevin Kamel <kamelkev@mailermailer.com>
 	* Updated handling of pseudo-classes
 		- correct issue raised in CPAN RT96413, errors incorrectly bubbling from HTML::Query
 		- update regex to properly target all unsupported pseudo-selectors

@@ -12,6 +12,7 @@ t/atrules.t
 t/basic.t
 t/basic_comment.t
 t/basic_media.t
+t/basic_pseudo.t
 t/basic_redeclare.t
 t/cascade.t
 t/css_url.t
@@ -34,6 +35,8 @@ t/html/linktest.html
 t/html/linktest_result.html
 t/html/mediaquerytest.html
 t/html/mediaquerytest_result.html
+t/html/pseudotest.html
+t/html/pseudotest_result.html
 t/html/relaxed.html
 t/html/relaxed_result.html
 t/linebreaktest.t
@@ -46,6 +49,6 @@ t/Parser/create.t
 t/Parser/fail.t
 t/Parser/hacks.t
 t/pod.t
-t/psuedo.t
+t/pseudotest.t
 t/relaxed.t
 t/specificity.t
