@@ -11,7 +11,8 @@ WriteMakefile(
         'HTML::Query' => 0.09,
         'LWP' => 0,
         'URI' => 0,
-        'Test::More' => 0
+        'Test::More' => 0,
+        'Scalar::Util' => 0
     },
     'test' => {
 	TESTS => join(' ', map { glob } qw( t/*.t t/*/*.t )),
