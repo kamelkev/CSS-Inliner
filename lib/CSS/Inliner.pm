@@ -346,15 +346,22 @@ sub inlinify {
       my @sorted_matches = sort { $a->{specificity} <=> $b->{specificity} || $a->{position} <=> $b->{position} } @$matches;
 
       my %new_style;
+      my %new_important_style;
+
       foreach my $match (@sorted_matches) {
         %new_style = (%new_style, %{$match->{css}});
+        %new_important_style = (%new_important_style, _grep_important_declarations($match->{css}));
       }
 
       # styles already inlined have greater precedence
       if (defined($element->attr('style'))) {
         my $cur_style = $self->_split({ style => $element->attr('style') });
         %new_style = (%new_style, %{$cur_style});
+        %new_important_style = (%new_important_style, _grep_important_declarations($cur_style));
       }
+
+      # override styles with !important styles
+      %new_style = (%new_style, %new_important_style);
 
       $element->attr('style', $self->_expand({ declarations => \%new_style }));
     }
@@ -855,6 +862,20 @@ sub _split {
   }
 
   return \%split;
+}
+
+sub _grep_important_declarations {
+  my ($declarations) = @_;
+
+  my %important;
+
+  while (my ($property, $value) = each %$declarations) {
+    if ($value =~ /!\s*important\s*$/i) {
+      $important{$property} = $value;
+    }
+  }
+
+  return %important;
 }
 
 1;
