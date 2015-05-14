@@ -23,9 +23,9 @@ CSS::Inliner - Library for converting CSS <style> blocks to inline styles.
 
 =head1 SYNOPSIS
 
-use Inliner;
+use CSS::Inliner;
 
-my $inliner = new Inliner();
+my $inliner = new CSS::Inliner();
 
 $inliner->read_file({ filename => 'myfile.html' });
 
