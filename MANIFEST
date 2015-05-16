@@ -19,6 +19,7 @@ t/css_url.t
 t/custom_html_tree.t
 t/embedded_style_block.t
 t/encoding.t
+t/entities.t
 t/fetch-filter.perl
 t/fetch.perl
 t/html/acidtest.html
