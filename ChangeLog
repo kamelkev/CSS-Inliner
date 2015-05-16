@@ -194,3 +194,13 @@
 		- update tests to properly exercise associated changes
 	* Rename test psuedo.t to pseudo.t (spelling)
 	* Bump up HTML::Query requirement to 0.09
+
+3957	2015-05-15	Kevin Kamel <kamelkev@mailermailer.com>
+	* Add support for an argument to the Inliner constructor to override the default set of entities
+		- resolve feature request raised in CPAN RT100857
+		- add test to validate basic behavior
+	* Fix issues within pod documentation
+	* Added patch provided by sixtease@cpan.org within CPAN RT99934
+		- Resolves improper !important rule handling
+		- Adds test for validating proper !important rule handling
+	* Update copyright to 2015 throughout project
