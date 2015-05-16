@@ -41,7 +41,7 @@ support top level <style> declarations.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings'];
+  my $members = ['stylesheet','css','html','html_tree','entities','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -69,6 +69,8 @@ BEGIN {
 
 Instantiates the Inliner object. Sets up class variables that are used
 during file parsing/processing. Possible options are:
+
+entities - (optional) Pass in a string containing characters to entity encode in all output, overrides the internal default provided by the module
 
 html_tree - (optional) Pass in a fresh unparsed instance of HTML::Treebuilder
 
@@ -101,17 +103,22 @@ sub new {
     croak 'Incompatible argument passed to new: "html_tree"';
   }
 
+  if (defined $$params{entities} && ref $$params{entities}) {
+    croak 'Incompatible argument passed to new: "entities"';
+  }
+
   my $self = {
     stylesheet => undef,
     css => CSS::Inliner::Parser->new({ warns_as_errors => $$params{warns_as_errors} }),
     html => undef,
     html_tree => defined($$params{html_tree}) ? $$params{html_tree} : CSS::Inliner::TreeBuilder->new(),
+    entities => defined($$params{entities}) ? $$params{entities} : q@^\n\r\t !\#\$%\(-;=?-~'@,
     query => undef,
     content_warnings => {},
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
     relaxed => (defined($$params{relaxed}) && $$params{relaxed}) ? 1 : 0,
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
-    warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
+    warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0
   };
 
   bless $self, $class;
@@ -376,7 +383,7 @@ sub inlinify {
     # 3rd argument overrides the optional end tag, which for HTML::Element
     # is just p, li, dt, dd - tags we want terminated for our purposes
 
-    $html = $self->_html_tree->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+    $html = $self->_html_tree->as_HTML($self->_entities(),' ',{});
   }
   else {
     $html = $self->{html};
@@ -546,7 +553,7 @@ sub _fetch_html {
 
   $self->_expand_stylesheet({ content => $doc, html_baseref => $baseref });
 
-  my $html = $doc->as_HTML(q@^\n\r\t !\#\$%\(-;=?-~'@,' ',{});
+  my $html = $doc->as_HTML($self->_entities(),' ',{});
 
   return $html;
 }
