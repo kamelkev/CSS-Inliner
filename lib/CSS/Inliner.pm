@@ -35,7 +35,7 @@ print $inliner->inlinify();
 
 Library for converting CSS style blocks into inline styles in an HTML
 document.  Specifically this is intended for the ease of generating
-HTML emails.  This is useful as even in 2014 Gmail and Hotmail don't
+HTML emails.  This is useful as even in 2015 Gmail and Hotmail don't
 support top level <style> declarations.
 
 =cut
@@ -904,7 +904,7 @@ Vivek Khera <vivek@khera.org>, Michael Peters <wonko@cpan.org>
 
 =head1 LICENSE
 
-This module is Copyright 2014 Khera Communications, Inc.  It is
+This module is Copyright 2015 Khera Communications, Inc.  It is
 licensed under the same terms as Perl itself.
 
 =cut

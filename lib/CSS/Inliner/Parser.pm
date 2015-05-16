@@ -1,4 +1,4 @@
-# Copyright 2014 MailerMailer, LLC - http://www.mailermailer.com
+# Copyright 2015 MailerMailer, LLC - http://www.mailermailer.com
 #
 # Based in large part on the CSS::Tiny CPAN Module
 # http://search.cpan.org/~adamk/CSS-Tiny/
