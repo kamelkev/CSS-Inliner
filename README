@@ -43,6 +43,10 @@ METHODS
 
         NOTE: This argument is not compatible with passing an html_tree.
 
+        agent - (optional) Pass in a string containing a preferred
+        user-agent, overrides the internal default provided by the module
+        for handling remote documents
+
     fetch_file
         Fetches a remote HTML file that supposedly contains both HTML and a
         style declaration, properly tags the data with the proper
@@ -56,6 +60,11 @@ METHODS
         url argument for the requested document. For example:
 
         $self->fetch_file({ url => 'http://www.example.com' });
+
+        Note that you can specify a user-agent to override the default
+        user-agent of 'Mozilla/4.0' within the constructor. Doing so may
+        avoid certain issues with agent filtering related to quirky
+        webserver configs.
 
     read_file
         Opens and reads an HTML file that supposedly contains both HTML and

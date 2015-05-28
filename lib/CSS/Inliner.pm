@@ -2,7 +2,7 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-our $VERSION = '3957';
+our $VERSION = '3958';
 
 use Carp;
 
@@ -41,7 +41,7 @@ support top level <style> declarations.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','entities','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings'];
+  my $members = ['stylesheet','css','html','html_tree','entities','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -58,8 +58,6 @@ BEGIN {
     }
   }
 }
-
-=pod
 
 =head1 METHODS
 
@@ -83,6 +81,8 @@ leave_style - (optional) Leave style/link tags alone within <head> during inlini
 relaxed - (optional) Relaxed HTML parsing which will attempt to interpret non-HTML4 documents.
 
 NOTE: This argument is not compatible with passing an html_tree.
+
+agent - (optional) Pass in a string containing a preferred user-agent, overrides the internal default provided by the module for handling remote documents
 
 =cut
 
@@ -118,7 +118,8 @@ sub new {
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
     relaxed => (defined($$params{relaxed}) && $$params{relaxed}) ? 1 : 0,
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
-    warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0
+    warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
+    agent => (defined($$params{agent}) && $$params{agent}) ? $$params{agent} : 'Mozilla/4.0'
   };
 
   bless $self, $class;
@@ -132,8 +133,6 @@ sub new {
 
   return $self;
 }
-
-=pod
 
 =item fetch_file
 
@@ -150,6 +149,10 @@ url argument for the requested document. For example:
 
 $self->fetch_file({ url => 'http://www.example.com' });
 
+Note that you can specify a user-agent to override the default user-agent
+of 'Mozilla/4.0' within the constructor. Doing so may avoid certain issues
+with agent filtering related to quirky webserver configs.
+
 =cut
 
 sub fetch_file {
@@ -161,7 +164,6 @@ sub fetch_file {
     croak 'You must pass in hash params that contain a url argument';
   }
 
-  #fetch a absolutized version of the html
   my $html = $self->_fetch_html({ url => $$params{url} });
 
   $self->read({ html => $html });
@@ -212,8 +214,6 @@ sub read_file {
   return();
 }
 
-=pod
-
 =item read
 
 Reads passed html data and parses it.  The intermediate data is stored in
@@ -255,8 +255,6 @@ sub read {
 
   return();
 }
-
-=pod
 
 =item inlinify
 
@@ -392,8 +390,6 @@ sub inlinify {
   return $html . "\n";
 }
 
-=pod
-
 =item query
 
 Given a particular selector return back the applicable styles
@@ -412,8 +408,6 @@ sub query {
   return $self->_query->query($$params{selector});
 }
 
-=pod
-
 =item specificity
 
 Given a particular selector return back the associated selectivity
@@ -431,8 +425,6 @@ sub specificity {
 
   return $self->_query->get_specificity($$params{selector});
 }
-
-=pod
 
 =item content_warnings
 
@@ -496,13 +488,14 @@ sub _fetch_url {
 
   # Create a user agent object
   my $ua = LWP::UserAgent->new;
-  $ua->agent('Mozilla/4.0'); # masquerade as Mozilla/4.0
+
+  $ua->agent($self->_agent()); # masquerade as Mozilla/4.0 unless otherwise specified in the constructor
   $ua->protocols_allowed( ['http','https'] );
 
   # Create a request
   my $uri = URI->new($$params{url});
 
-  my $req = HTTP::Request->new('GET',$uri);
+  my $req = HTTP::Request->new('GET', $uri, [ 'Accept' => 'text/html, */*' ]);
 
   # Pass request to the user agent and get a response back
   my $res = $ua->request($req);
@@ -886,8 +879,6 @@ sub _grep_important_declarations {
 }
 
 1;
-
-=pod
 
 =head1 Sponsor
 

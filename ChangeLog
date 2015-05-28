@@ -204,3 +204,9 @@
 		- Resolves improper !important rule handling
 		- Adds test for validating proper !important rule handling
 	* Update copyright to 2015 throughout project
+
+3958	2015-05-29	Kevin Kamel <kamelkev@mailermailer.com>
+	* Add support for an agent string argument for the remote fetching of documents
+        * Add patch provided by Dave Gray (cpan@doesntsuck.com)
+		- Adds proper headers for remote fetching of files
+	* Fix issues within pod documentation
