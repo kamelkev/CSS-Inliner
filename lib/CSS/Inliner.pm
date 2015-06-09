@@ -9,6 +9,7 @@ use Carp;
 use Encode;
 use LWP::UserAgent;
 use URI;
+use Scalar::Util 'blessed';
 
 use HTML::Query 'query';
 
@@ -93,7 +94,7 @@ sub new {
 
   # passed in html_tree argument must be of correct type
   # TODO: make sure tree has no content already
-  if (defined $$params{html_tree} && $$params{html_tree} && ref $$params{html_tree} ne 'HTML::TreeBuilder') {
+  if (defined $$params{html_tree} && blessed( $$params{html_tree} ) && !$$params{html_tree}->isa( 'HTML::TreeBuilder' ) ) {
     croak 'Incompatible argument passed to new: "html_tree"';
   }
 
