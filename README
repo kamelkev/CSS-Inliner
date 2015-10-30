@@ -66,6 +66,10 @@ METHODS
         avoid certain issues with agent filtering related to quirky
         webserver configs.
 
+        Input Parameters: url - the desired url for a remote asset
+        presumably containing both html and css charset - (optional)
+        programmer specified charset for the pass url
+
     read_file
         Opens and reads an HTML file that supposedly contains both HTML and
         a style declaration. It subsequently calls the read() method
@@ -80,6 +84,10 @@ METHODS
         for example:
 
         $self->read_file({ filename => 'myfile.html', charset => 'utf8' });
+
+        Input Parameters: filename - name of local file presumably
+        containing both html and css charset - (optional) programmer
+        specified charset of the passed file
 
     read
         Reads passed html data and parses it. The intermediate data is
@@ -96,6 +104,25 @@ METHODS
         NOTE: You are required to pass a properly encoded perl reference to
         the html data. This method does *not* do the dirty work of encoding
         the html as utf8 - do that before calling this method.
+
+        Input Parameters: html - scalar presumably containing both html and
+        css charset - (optional) scalar representing the original charset of
+        the passed html
+
+    decode_characters
+        Implement the character decoding algorithm for HTML as outlined by
+        the various working groups
+
+        Basically apply best practices for determining the applied character
+        encoding and properly decode it
+
+        It is expected that this method will be called before any calls to
+        read()
+
+        Input Parameters: content - scalar presumably containing both html
+        and css charset - programmer specified charset for the passed
+        content ctcharset - (optional) content-type specified charset for
+        content retrieved via a url
 
     inlinify
         Processes the html data that was entered through either 'read' or

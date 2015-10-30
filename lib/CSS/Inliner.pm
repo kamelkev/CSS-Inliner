@@ -41,7 +41,7 @@ support top level <style> declarations.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','entities','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent'];
+  my $members = ['stylesheet','css','html','html_tree','entities','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent','charset'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -119,7 +119,8 @@ sub new {
     relaxed => (defined($$params{relaxed}) && $$params{relaxed}) ? 1 : 0,
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
     warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
-    agent => (defined($$params{agent}) && $$params{agent}) ? $$params{agent} : 'Mozilla/4.0'
+    agent => (defined($$params{agent}) && $$params{agent}) ? $$params{agent} : 'Mozilla/4.0',
+    charset => undef
   };
 
   bless $self, $class;
@@ -153,6 +154,10 @@ Note that you can specify a user-agent to override the default user-agent
 of 'Mozilla/4.0' within the constructor. Doing so may avoid certain issues
 with agent filtering related to quirky webserver configs.
 
+Input Parameters:
+ url - the desired url for a remote asset presumably containing both html and css
+ charset - (optional) programmer specified charset for the pass url
+
 =cut
 
 sub fetch_file {
@@ -164,9 +169,25 @@ sub fetch_file {
     croak 'You must pass in hash params that contain a url argument';
   }
 
-  my $html = $self->_fetch_html({ url => $$params{url} });
+  # fetch and retrieve the remote content
+  my ($content,$baseref,$ctcharset) = $self->_fetch_url({ url => $$params{url} });
 
-  $self->read({ html => $html });
+  my ($decoded_html,$charset) = $self->decode_characters({ content => $content, charset => $$params{charset}, ctcharset => $$params{ctcharset} });
+
+  # Build the HTML tree
+  my $doc = HTML::TreeBuilder->new();
+  $doc->parse($decoded_html);
+  $doc->eof;
+
+  # Change relative links to absolute links
+  $self->_changelink_relative({ content => $doc->content, baseref => $baseref});
+
+  $self->_expand_stylesheet({ content => $doc, html_baseref => $baseref });
+
+  # dump out the final processed html for reading
+  my $html = $doc->as_HTML($self->_entities(),' ',{});
+
+  $self->read({ html => $html, charset => $charset });
 
   return();
 }
@@ -187,6 +208,10 @@ example:
 
 $self->read_file({ filename => 'myfile.html', charset => 'utf8' });
 
+Input Parameters:
+ filename - name of local file presumably containing both html and css
+ charset - (optional) programmer specified charset of the passed file
+
 =cut
 
 sub read_file {
@@ -195,21 +220,15 @@ sub read_file {
   $self->_check_object();
 
   unless ($params && $$params{filename}) {
-    croak 'You must pass in hash params that contain a filename argument';
+    croak "You must pass in hash params that contain a filename argument";
   }
 
-  open FILE, "<", $$params{filename} or croak $!;
-  my $content = do { local( $/ ) ; <FILE> } ;
+  open FILE, "<", $$params{filename} or die $!;
+  my $content = do { local( $/ ) ; <FILE> };
 
-  my $html;
-  if (defined($$params{charset}) && $$params{charset} && find_encoding($$params{charset}) ) {
-    $html = decode($$params{charset}, $content);
-  }
-  else {
-    $html = $content; # best we can do, no encoding specified
-  }
+  my ($decoded_html,$charset) = $self->decode_characters({ content => $content, charset => $$params{charset} });
 
-  $self->read({ html => $html });
+  $self->read({ html => $decoded_html, charset => $charset });
 
   return();
 }
@@ -231,6 +250,10 @@ NOTE: You are required to pass a properly encoded perl reference to the
 html data. This method does *not* do the dirty work of encoding the html
 as utf8 - do that before calling this method.
 
+Input Parameters:
+ html - scalar presumably containing both html and css
+ charset - (optional) scalar representing the original charset of the passed html
+
 =cut
 
 sub read {
@@ -242,9 +265,14 @@ sub read {
     croak 'You must pass in hash params that contains html data';
   }
 
+  if ($params && $$params{charset} && !find_encoding($$params{charset})) {
+    croak "Invalid charset passed to read()";
+  }
+
   $self->_html_tree->parse_content($$params{html});
 
   $self->_init_query();
+  $self->_charset($$params{charset});
 
   #suck in the styles for later use from the head section - stylesheets anywhere else are invalid
   my $stylesheet = $self->_parse_stylesheet();
@@ -254,6 +282,70 @@ sub read {
   $self->_stylesheet($stylesheet);
 
   return();
+}
+
+=item decode_characters
+
+Implement the character decoding algorithm for HTML as outlined by the various working groups
+
+Basically apply best practices for determining the applied character encoding and properly decode it
+
+It is expected that this method will be called before any calls to read()
+
+Input Parameters:
+ content - scalar presumably containing both html and css
+ charset - programmer specified charset for the passed content
+ ctcharset - (optional) content-type specified charset for content retrieved via a url
+
+=cut
+
+sub decode_characters {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  unless ($params && $$params{content}) {
+    croak "You must pass content for content character decoding";
+  }
+
+  my ($decoded_html,$charset);
+
+  eval {
+    if (exists($$params{charset}) && $$params{charset} && find_encoding($$params{charset})) {
+      # precedence given to programmer provided charset
+      $charset = $$params{charset};
+      $decoded_html = decode($$params{charset}, $$params{content});
+    }
+    else {
+      # analyze the document to scan for any meta charset hints we can use
+      my $meta_charset = $self->_extract_meta_charset({ content => $$params{content} });
+
+      if ($meta_charset && find_encoding($meta_charset)) {
+        # decode using the meta charset parameter
+        $charset = $meta_charset;
+        $decoded_html = decode($meta_charset, $$params{content});
+      }
+      else {
+        # running out of options, resort to protocol content type, if that doesn't work do nothing
+        if (exists($$params{ctcharset}) && $$params{ctcharset} && find_encoding($$params{ctcharset})) {
+          # decode using the charset provided via the Content-Type header
+          $charset = $$params{ctcharset};
+          $decoded_html = decode($$params{ctcharset}, $$params{content});
+        }
+        else {
+          # no hints found, we assume ascii
+          $charset = 'ascii';
+          $decoded_html = $$params{content};
+        }
+      }
+    }
+  };
+
+  if (!$decoded_html && $$params{charset}) {
+    croak('Error decoding content character set "'.$$params{charset}.'"');
+  }
+
+  return ($decoded_html,$charset);
 }
 
 =item inlinify
@@ -510,45 +602,12 @@ sub _fetch_url {
     croak 'The web site address you entered is not an HTML document.';
   }
 
-  my $content;
-  if ($res->content_type_charset && find_encoding($res->content_type_charset)->name) {
-    $content = decode($res->content_type_charset, $res->content || '');
-  }
-  else {
-    $content = $res->content || ''; # best we can do, no encoding given
-  }
-
-  # Expand all URLs to absolute ones
+  # record the content, charset and baseref of the response
+  my $ctcharset = $res->content_type_charset();
+  my $content = $res->content || '';
   my $baseref = $res->base;
 
-  return ($content,$baseref);
-}
-
-sub _fetch_html {
-  my ($self,$params) = @_;
-
-  $self->_check_object();
-
-  my $url = ($$params{url} =~ m/^https?:\/\//) ? $$params{url} : 'http://' . $$params{url};
-
-  my ($content,$baseref) = $self->_fetch_url({ url => $url });
-
-  # Build "relaxed" HTML tree using internal treebuilder - we want to return html that is as
-  # close to the original as possible. We can more strictly parse this later if necessary
-  my $doc = CSS::Inliner::TreeBuilder->new();
-  $doc->store_comments(1);
-  $doc->ignore_unknown(0);
-  $doc->implicit_tags(0);
-  $doc->parse_content($content);
-
-  # Change relative links to absolute links
-  $self->_changelink_relative({ content => $doc->content, baseref => $baseref });
-
-  $self->_expand_stylesheet({ content => $doc, html_baseref => $baseref });
-
-  my $html = $doc->as_HTML($self->_entities(),' ',{});
-
-  return $html;
+  return ($content,$baseref,$ctcharset);
 }
 
 sub _changelink_relative {
@@ -819,6 +878,41 @@ sub _collapse_inline_styles {
       $self->_collapse_inline_styles({ content => $i->content() });
     }
   }
+}
+
+sub _extract_meta_charset {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  # we are going to parse an html document as ascii that is not necessarily ascii - silence the warning
+  local $SIG{__WARN__} = sub { my $warning = shift; warn $warning unless $warning =~ /^Parsing of undecoded UTF-8/ };
+
+  # parse document and pull out key header elements
+  my $doc = HTML::TreeBuilder->new();
+  $doc->parse($$params{content});
+  $doc->eof;
+
+  my $head = $doc->look_down("_tag", "head"); # there should only be one
+
+  # pull key header meta elements
+  my $meta_charset_elem = $head->look_down('_tag','meta','charset',qr/./);
+  my $meta_equiv_charset_elem = $head->look_down('_tag','meta','http-equiv',qr/content-type/i,'content',qr/./);
+
+  # assign meta charset, we give precedence to meta http_equiv content type
+  my $meta_charset;
+  if ($meta_equiv_charset_elem) {
+    my $meta_equiv_content = $meta_equiv_charset_elem->attr('content');
+
+    if ($meta_equiv_content =~ /charset=(.*)(?:[";,]?)/i) {
+      $meta_charset = $1;
+    }
+  }
+  elsif ($meta_charset_elem) {
+    $meta_charset = $meta_charset_elem->attr('charset');
+  }
+
+  return $meta_charset;
 }
 
 sub _init_query {
