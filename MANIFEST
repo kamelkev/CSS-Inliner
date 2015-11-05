@@ -41,6 +41,7 @@ t/html/pseudotest.html
 t/html/pseudotest_result.html
 t/html/relaxed.html
 t/html/relaxed_result.html
+t/important.t
 t/linebreaktest.t
 t/linktest.t
 t/mediaquery.t
