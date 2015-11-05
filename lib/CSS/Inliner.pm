@@ -9,6 +9,7 @@ use Carp;
 use Encode;
 use LWP::UserAgent;
 use URI;
+use HTML::Entities;
 
 use HTML::Query 'query';
 
@@ -112,7 +113,7 @@ sub new {
     css => CSS::Inliner::Parser->new({ warns_as_errors => $$params{warns_as_errors} }),
     html => undef,
     html_tree => defined($$params{html_tree}) ? $$params{html_tree} : CSS::Inliner::TreeBuilder->new(),
-    entities => defined($$params{entities}) ? $$params{entities} : q@^\n\r\t !\#\$%\(-;=?-~'@,
+    entities => defined($$params{entities}) ? $$params{entities} : '<>&"',
     query => undef,
     content_warnings => {},
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
@@ -125,12 +126,7 @@ sub new {
 
   bless $self, $class;
 
-  # configure tree
-  $self->_html_tree->store_comments(1);
-  if ($self->_relaxed()) {
-    $self->_html_tree->ignore_unknown(0);
-    $self->_html_tree->implicit_tags(0);
-  }
+  $self->_configure_tree({ tree => $self->_html_tree });
 
   return $self;
 }
@@ -172,20 +168,9 @@ sub fetch_file {
   # fetch and retrieve the remote content
   my ($content,$baseref,$ctcharset) = $self->_fetch_url({ url => $$params{url} });
 
-  my ($decoded_html,$charset) = $self->decode_characters({ content => $content, charset => $$params{charset}, ctcharset => $$params{ctcharset} });
+  my ($decoded_html,$charset) = $self->decode_characters({ content => $content, charset => $$params{charset}, ctcharset => $ctcharset });
 
-  # Build the HTML tree
-  my $doc = HTML::TreeBuilder->new();
-  $doc->parse($decoded_html);
-  $doc->eof;
-
-  # Change relative links to absolute links
-  $self->_changelink_relative({ content => $doc->content, baseref => $baseref});
-
-  $self->_expand_stylesheet({ content => $doc, html_baseref => $baseref });
-
-  # dump out the final processed html for reading
-  my $html = $doc->as_HTML($self->_entities(),' ',{});
+  my $html = $self->_absolutize_references({ content => $decoded_html, baseref => $baseref });
 
   $self->read({ html => $html, charset => $charset });
 
@@ -269,7 +254,9 @@ sub read {
     croak "Invalid charset passed to read()";
   }
 
-  $self->_html_tree->parse_content($$params{html});
+  my $protected_html = $self->_protect_entities({ content => $$params{html} });
+
+  $self->_html_tree->parse_content($protected_html);
 
   $self->_init_query();
   $self->_charset($$params{charset});
@@ -326,7 +313,7 @@ sub decode_characters {
         $decoded_html = decode($meta_charset, $$params{content});
       }
       else {
-        # running out of options, resort to protocol content type, if that doesn't work do nothing
+        # running out of options, resort to protocol content type
         if (exists($$params{ctcharset}) && $$params{ctcharset} && find_encoding($$params{ctcharset})) {
           # decode using the charset provided via the Content-Type header
           $charset = $$params{ctcharset};
@@ -472,14 +459,15 @@ sub inlinify {
 
     # 3rd argument overrides the optional end tag, which for HTML::Element
     # is just p, li, dt, dd - tags we want terminated for our purposes
-
     $html = $self->_html_tree->as_HTML($self->_entities(),' ',{});
   }
   else {
     $html = $self->{html};
   }
 
-  return $html . "\n";
+  my $unprotected_html = $self->_unprotect_entities({ content => $html });
+
+  return $unprotected_html . "\n";
 }
 
 =item query
@@ -554,7 +542,7 @@ sub _check_object {
    croak 'You must instantiate this class in order to properly use it';
   }
 
-  return ();
+  return();
 }
 
 sub _report_warning {
@@ -571,6 +559,45 @@ sub _report_warning {
   }
 
   return();
+}
+
+sub _configure_tree {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  my $tree = $$params{tree};
+
+  # configure tree
+  $tree->store_comments(1);
+  $tree->attr_encoded(1);
+  if ($self->_relaxed()) {
+    $tree->ignore_unknown(0);
+    $tree->implicit_tags(0);
+  }
+
+  return();
+}
+
+sub _protect_entities {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  my $content = $$params{content} // '';
+
+  encode_entities($content, '&');
+  
+  return $content;
+}
+
+sub _unprotect_entities {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  # there is no corresponding HTML::Entities call to allow selective decoding of entities
+  return (($$params{content} // '') =~ s/&amp;/&/gr);
 }
 
 sub _fetch_url {
@@ -610,7 +637,34 @@ sub _fetch_url {
   return ($content,$baseref,$ctcharset);
 }
 
-sub _changelink_relative {
+sub _absolutize_references {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  # protect the html entities within the content, we want to preserve their current encoding
+  my $protected_content = $self->_protect_entities({ content => $$params{content} });
+  
+  # parse the protected document, we need to localize it
+  my $absolutize_tree = new CSS::Inliner::TreeBuilder();
+  $self->_configure_tree({ tree => $absolutize_tree });
+
+  $absolutize_tree->parse_content($protected_content);
+
+  # Change relative links to absolute links
+  $self->__changelink_relative({ content => $absolutize_tree->content(), baseref => $$params{baseref} });
+
+  $self->__expand_stylesheet({ content => $absolutize_tree, html_baseref => $$params{baseref} });
+
+  # dump out the final processed html for reading
+  my $absolutized_content = $absolutize_tree->as_HTML($self->_entities(),' ',{});
+
+  my $unprotected_content = $self->_unprotect_entities({ content => $absolutized_content });
+
+  return $unprotected_content;
+}
+
+sub __changelink_relative {
   my ($self,$params) = @_;
 
   $self->_check_object();
@@ -651,7 +705,7 @@ sub _changelink_relative {
 
     # Recurse down tree
     if (defined $i->content) {
-      $self->_changelink_relative({ content => $i->content, baseref => $base });
+      $self->__changelink_relative({ content => $i->content, baseref => $base });
     }
   }
 }
@@ -666,7 +720,7 @@ sub __fix_relative_url {
   return $$params{prefix} . "'" . $uri->abs($$params{base})->as_string ."'";
 }
 
-sub _expand_stylesheet {
+sub __expand_stylesheet {
   my ($self,$params) = @_;
 
   $self->_check_object();
@@ -737,6 +791,7 @@ sub _validate_html {
   my ($self,$params) = @_;
 
   my $validator_tree = new CSS::Inliner::TreeBuilder();
+
   $validator_tree->ignore_unknown(0);
   $validator_tree->implicit_tags(0);
   $validator_tree->parse_content($$params{html});
@@ -890,8 +945,7 @@ sub _extract_meta_charset {
 
   # parse document and pull out key header elements
   my $doc = HTML::TreeBuilder->new();
-  $doc->parse($$params{content});
-  $doc->eof;
+  $doc->parse_content($$params{content});
 
   my $head = $doc->look_down("_tag", "head"); # there should only be one
 
