@@ -11,10 +11,10 @@ use FindBin qw($Bin);
 plan(tests => 1);
 
 my $html_path = "$Bin/html/";
-my $test_file = $html_path . 'encoding.html';
-my $result_file = $html_path . 'encoding_result.html';
+my $test_file = $html_path . 'charset.html';
+my $result_file = $html_path . 'charset_result.html';
 
-open( my $fh, $result_file ) or die "can't open $result_file: $!!\n";
+open(my $fh, '<:utf8', $result_file) or die "can't open $result_file: $!!\n";
 my $correct_result = do { local( $/ ) ; <$fh> } ;
 
 my $inliner = CSS::Inliner->new();
