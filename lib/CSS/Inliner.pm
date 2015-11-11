@@ -1034,7 +1034,8 @@ Kevin Kamel <kamelkev@mailermailer.com>
 
 =head1 CONTRIBUTORS
 
-Vivek Khera <vivek@khera.org>, Michael Peters <wonko@cpan.org>
+Vivek Khera <vivek@khera.org>, Michael Peters <wonko@cpan.org>,
+Dave Gray <cpan@doesntsuck.com>
 
 =head1 LICENSE
 
