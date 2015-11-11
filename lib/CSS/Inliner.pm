@@ -611,6 +611,9 @@ sub _fetch_url {
   $ua->agent($self->_agent()); # masquerade as Mozilla/4.0 unless otherwise specified in the constructor
   $ua->protocols_allowed( ['http','https'] );
 
+  # set URI internal flag such that leading dot edge-case urls work
+  local $URI::ABS_REMOTE_LEADING_DOTS = 1;
+
   # Create a request
   my $uri = URI->new($$params{url});
 
