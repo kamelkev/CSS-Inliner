@@ -347,7 +347,11 @@ sub decode_characters {
 
   my $decoded_html;
   eval {
-    $decoded_html = ($charset eq 'utf-8') ? NFC(decode_utf8($content)) : decode($charset, $content);
+    $decoded_html = decode($charset,$content);
+
+    if ($charset eq 'utf-8') {
+      $decoded_html = NFC($decoded_html); # normalize using the NFC form
+    }
   };
 
   if (!$decoded_html) {
