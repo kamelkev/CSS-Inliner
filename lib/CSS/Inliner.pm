@@ -5,16 +5,14 @@ use warnings;
 our $VERSION = '3958';
 
 use Carp;
-
 use Encode;
 use LWP::UserAgent;
-use URI;
-use HTML::Entities;
-
 use HTML::Query 'query';
+use Unicode::Normalize qw(NFC);
+use URI;
 
-use CSS::Inliner::TreeBuilder;
 use CSS::Inliner::Parser;
+use CSS::Inliner::TreeBuilder;
 
 =pod
 
@@ -42,7 +40,7 @@ support top level <style> declarations.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','entities','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent','charset'];
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent','charset'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -68,8 +66,6 @@ BEGIN {
 
 Instantiates the Inliner object. Sets up class variables that are used
 during file parsing/processing. Possible options are:
-
-entities - (optional) Pass in a string containing characters to entity encode in all output, overrides the internal default provided by the module
 
 html_tree - (optional) Pass in a fresh unparsed instance of HTML::Treebuilder
 
@@ -104,16 +100,11 @@ sub new {
     croak 'Incompatible argument passed to new: "html_tree"';
   }
 
-  if (defined $$params{entities} && ref $$params{entities}) {
-    croak 'Incompatible argument passed to new: "entities"';
-  }
-
   my $self = {
     stylesheet => undef,
     css => CSS::Inliner::Parser->new({ warns_as_errors => $$params{warns_as_errors} }),
     html => undef,
     html_tree => defined($$params{html_tree}) ? $$params{html_tree} : CSS::Inliner::TreeBuilder->new(),
-    entities => defined($$params{entities}) ? $$params{entities} : '<>&"',
     query => undef,
     content_warnings => {},
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
@@ -168,7 +159,9 @@ sub fetch_file {
   # fetch and retrieve the remote content
   my ($content,$baseref,$ctcharset) = $self->_fetch_url({ url => $$params{url} });
 
-  my ($decoded_html,$charset) = $self->decode_characters({ content => $content, charset => $$params{charset}, ctcharset => $ctcharset });
+  my $charset = $self->detect_charset({ content => $content, charset => $$params{charset}, ctcharset => $ctcharset });
+
+  my $decoded_html = $self->decode_characters({ content => $content, charset => $charset });
 
   my $html = $self->_absolutize_references({ content => $decoded_html, baseref => $baseref });
 
@@ -211,7 +204,9 @@ sub read_file {
   open FILE, "<", $$params{filename} or die $!;
   my $content = do { local( $/ ) ; <FILE> };
 
-  my ($decoded_html,$charset) = $self->decode_characters({ content => $content, charset => $$params{charset} });
+  my $charset = $self->detect_charset({ content => $content, charset => $$params{charset} });
+
+  my $decoded_html = $self->decode_characters({ content => $content, charset => $charset });
 
   $self->read({ html => $decoded_html, charset => $charset });
 
@@ -254,9 +249,7 @@ sub read {
     croak "Invalid charset passed to read()";
   }
 
-  my $protected_html = $self->_protect_entities({ content => $$params{html} });
-
-  $self->_html_tree->parse_content($protected_html);
+  $self->_html_tree->parse_content($$params{html});
 
   $self->_init_query();
   $self->_charset($$params{charset});
@@ -271,6 +264,54 @@ sub read {
   return();
 }
 
+=item detect_charset
+
+Implement the character decoding algorithm for HTML as outlined by the w3c working group
+
+Input Parameters:
+ content - scalar presumably containing both html and css
+ charset - (optional) programmer specified charset for the passed content
+ ctcharset - (optional) content-type specified charset for content retrieved via a url
+
+=cut
+
+sub detect_charset {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  unless ($params && $$params{content}) {
+    croak "You must pass content for content character decoding";
+  }
+
+  my $charset;
+  if (exists($$params{charset}) && $$params{charset} && find_encoding($$params{charset})) {
+    # precedence given to programmer provided charset
+    $charset = $$params{charset};
+  }
+  else {
+    # analyze the document to scan for any meta charset hints we can use
+    my $meta_charset = $self->_extract_meta_charset({ content => $$params{content} });
+
+    if ($meta_charset && find_encoding($meta_charset)) {
+      # use the meta charset from the document if available
+      $charset = $meta_charset;
+    }
+    else {
+      if (exists($$params{ctcharset}) && $$params{ctcharset} && find_encoding($$params{ctcharset})) {
+        # use the Content-Type charset if available
+        $charset = $$params{ctcharset};
+      }
+      else {
+        # no hints found, we assume ascii
+        $charset = 'ascii';
+      }
+    }
+  }
+
+  return $charset;
+}
+
 =item decode_characters
 
 Implement the character decoding algorithm for HTML as outlined by the various working groups
@@ -281,8 +322,7 @@ It is expected that this method will be called before any calls to read()
 
 Input Parameters:
  content - scalar presumably containing both html and css
- charset - programmer specified charset for the passed content
- ctcharset - (optional) content-type specified charset for content retrieved via a url
+ charset - known charset for the passed content
 
 =cut
 
@@ -295,44 +335,23 @@ sub decode_characters {
     croak "You must pass content for content character decoding";
   }
 
-  my ($decoded_html,$charset);
-
-  eval {
-    if (exists($$params{charset}) && $$params{charset} && find_encoding($$params{charset})) {
-      # precedence given to programmer provided charset
-      $charset = $$params{charset};
-      $decoded_html = decode($$params{charset}, $$params{content});
-    }
-    else {
-      # analyze the document to scan for any meta charset hints we can use
-      my $meta_charset = $self->_extract_meta_charset({ content => $$params{content} });
-
-      if ($meta_charset && find_encoding($meta_charset)) {
-        # decode using the meta charset parameter
-        $charset = $meta_charset;
-        $decoded_html = decode($meta_charset, $$params{content});
-      }
-      else {
-        # running out of options, resort to protocol content type
-        if (exists($$params{ctcharset}) && $$params{ctcharset} && find_encoding($$params{ctcharset})) {
-          # decode using the charset provided via the Content-Type header
-          $charset = $$params{ctcharset};
-          $decoded_html = decode($$params{ctcharset}, $$params{content});
-        }
-        else {
-          # no hints found, we assume ascii
-          $charset = 'ascii';
-          $decoded_html = $$params{content};
-        }
-      }
-    }
-  };
-
-  if (!$decoded_html && $$params{charset}) {
-    croak('Error decoding content character set "'.$$params{charset}.'"');
+  unless ($params && $$params{charset}) {
+    croak "You must pass the charset type of the content to decode";
   }
 
-  return ($decoded_html,$charset);
+  my $content = $$params{content};
+  my $charset = $$params{charset};
+
+  my $decoded_html;
+  eval {
+    $decoded_html = ($charset eq 'utf-8') ? NFC(decode_utf8($content)) : decode($charset, $content);
+  };
+
+  if (!$decoded_html) {
+    croak('Error decoding content with character set "'.$$params{charset}.'"');
+  }
+
+  return $decoded_html;
 }
 
 =item inlinify
@@ -454,20 +473,14 @@ sub inlinify {
     #BUT we need to collapse the declarations to remove duplicate overridden styles
     $self->_collapse_inline_styles();
 
-    # The entities list is the do-not-encode string from HTML::Entities
-    # with the single quote added.
-
-    # 3rd argument overrides the optional end tag, which for HTML::Element
-    # is just p, li, dt, dd - tags we want terminated for our purposes
-    $html = $self->_html_tree->as_HTML($self->_entities(),' ',{});
+    # dump out the final processed html for returning to the caller
+    $html = $self->_html_tree->as_HTML('',' ',{});
   }
   else {
     $html = $self->{html};
   }
 
-  my $unprotected_html = $self->_unprotect_entities({ content => $html });
-
-  return $unprotected_html . "\n";
+  return $html . "\n";
 }
 
 =item query
@@ -571,33 +584,13 @@ sub _configure_tree {
   # configure tree
   $tree->store_comments(1);
   $tree->attr_encoded(1);
+  $tree->no_expand_entities(1);
   if ($self->_relaxed()) {
     $tree->ignore_unknown(0);
     $tree->implicit_tags(0);
   }
 
   return();
-}
-
-sub _protect_entities {
-  my ($self,$params) = @_;
-
-  $self->_check_object();
-
-  my $content = $$params{content} // '';
-
-  encode_entities($content, '&');
-  
-  return $content;
-}
-
-sub _unprotect_entities {
-  my ($self,$params) = @_;
-
-  $self->_check_object();
-
-  # there is no corresponding HTML::Entities call to allow selective decoding of entities
-  return (($$params{content} // '') =~ s/&amp;/&/gr);
 }
 
 sub _fetch_url {
@@ -642,14 +635,11 @@ sub _absolutize_references {
 
   $self->_check_object();
 
-  # protect the html entities within the content, we want to preserve their current encoding
-  my $protected_content = $self->_protect_entities({ content => $$params{content} });
-  
   # parse the protected document, we need to localize it
   my $absolutize_tree = new CSS::Inliner::TreeBuilder();
   $self->_configure_tree({ tree => $absolutize_tree });
 
-  $absolutize_tree->parse_content($protected_content);
+  $absolutize_tree->parse_content($$params{content});
 
   # Change relative links to absolute links
   $self->__changelink_relative({ content => $absolutize_tree->content(), baseref => $$params{baseref} });
@@ -657,11 +647,9 @@ sub _absolutize_references {
   $self->__expand_stylesheet({ content => $absolutize_tree, html_baseref => $$params{baseref} });
 
   # dump out the final processed html for reading
-  my $absolutized_content = $absolutize_tree->as_HTML($self->_entities(),' ',{});
+  my $absolutized_content = $absolutize_tree->as_HTML('',' ',{});
 
-  my $unprotected_content = $self->_unprotect_entities({ content => $absolutized_content });
-
-  return $unprotected_content;
+  return $absolutized_content;
 }
 
 sub __changelink_relative {
