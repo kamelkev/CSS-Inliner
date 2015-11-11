@@ -8,7 +8,6 @@ use Carp;
 use Encode;
 use LWP::UserAgent;
 use HTML::Query 'query';
-use Unicode::Normalize qw(NFC);
 use URI;
 
 use CSS::Inliner::Parser;
@@ -348,10 +347,6 @@ sub decode_characters {
   my $decoded_html;
   eval {
     $decoded_html = decode($charset,$content);
-
-    if ($charset eq 'utf-8') {
-      $decoded_html = NFC($decoded_html); # normalize using the NFC form
-    }
   };
 
   if (!$decoded_html) {
