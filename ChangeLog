@@ -210,3 +210,20 @@
         * Add patch provided by Dave Gray (cpan@doesntsuck.com)
 		- Adds proper headers for remote fetching of files
 	* Fix issues within pod documentation
+
+39XX	2015-11-XX	Kevin Kamel <kamelkev@mailermailer.com>
+	* Extend support for foreign character sets
+		- implement charset detection algorithm, roughly based off of HTML5 W3C specification
+		- implement character encoding/decoding based upon detected charset
+		- implement NFC normalization for UTF8 documents
+		- add tests for exercising new charset related features
+		- update documentation regarding new methods to support foreign charsets
+	* Add reference to contributor Dave Gray (cpan@doesntsuck.com) to contributors section
+	* Add new TreeBuilder configuration method, which ensures all instances are configured identically
+	* Remove all entity handling intentionally or unintentionally done, retain original state of all read chars
+		- Modify configuration of all TreeBuilder instances, remove all entity decoding done during parsing
+		- Modify configuration of TreeBuilder output, skip calls for entity encoding
+		- strip all documentation and argument handling related to entity encoding
+		- All entity encoding is now the responsibility of the caller
+	* Update MANIFEST to reference all added tests/assets
+	* Fix minor formatting issues within some tests/assets
