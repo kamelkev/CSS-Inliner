@@ -266,7 +266,12 @@ sub read {
 
 =item detect_charset
 
-Implement the character decoding algorithm for HTML as outlined by the w3c working group
+Detect the charset of the passed content.
+
+The algorithm present here is roughly based off of the HTML5 W3C working group document,
+which lays out a recommendation for determining the character set of a received document, which
+can be seen here:
+http://www.w3.org/TR/html5/syntax.html#determining-the-character-encoding
 
 Input Parameters:
  content - scalar presumably containing both html and css
@@ -289,6 +294,10 @@ sub detect_charset {
     # precedence given to programmer provided charset
     $charset = $$params{charset};
   }
+  elsif (exists($$params{ctcharset}) && $$params{ctcharset} && find_encoding($$params{ctcharset})) {
+    # use the Content-Type charset if available
+    $charset = $$params{ctcharset};
+  }
   else {
     # analyze the document to scan for any meta charset hints we can use
     my $meta_charset = $self->_extract_meta_charset({ content => $$params{content} });
@@ -298,14 +307,8 @@ sub detect_charset {
       $charset = $meta_charset;
     }
     else {
-      if (exists($$params{ctcharset}) && $$params{ctcharset} && find_encoding($$params{ctcharset})) {
-        # use the Content-Type charset if available
-        $charset = $$params{ctcharset};
-      }
-      else {
-        # no hints found, we assume ascii
-        $charset = 'ascii';
-      }
+      # no hints found, assume ascii until support for additional steps from the working group is added
+      $charset = 'ascii';
     }
   }
 
