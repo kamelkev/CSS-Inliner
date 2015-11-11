@@ -59,9 +59,7 @@ BEGIN {
 
 =head1 METHODS
 
-=over
-
-=item E<32>new
+=head2 new
 
 Instantiates the Inliner object. Sets up class variables that are used
 during file parsing/processing. Possible options are:
@@ -121,7 +119,7 @@ sub new {
   return $self;
 }
 
-=item fetch_file
+=head2 fetch_file
 
 Fetches a remote HTML file that supposedly contains both HTML and a
 style declaration, properly tags the data with the proper characterset
@@ -169,7 +167,7 @@ sub fetch_file {
   return();
 }
 
-=item read_file
+=head2 read_file
 
 Opens and reads an HTML file that supposedly contains both HTML and a
 style declaration.  It subsequently calls the read() method
@@ -212,7 +210,7 @@ sub read_file {
   return();
 }
 
-=item read
+=head2 read
 
 Reads passed html data and parses it.  The intermediate data is stored in
 class variables.
@@ -263,14 +261,14 @@ sub read {
   return();
 }
 
-=item detect_charset
+=head2 detect_charset
 
 Detect the charset of the passed content.
 
 The algorithm present here is roughly based off of the HTML5 W3C working group document,
 which lays out a recommendation for determining the character set of a received document, which
-can be seen here:
-http://www.w3.org/TR/html5/syntax.html#determining-the-character-encoding
+can be seen here under the "determining the character encoding" section:
+http://www.w3.org/TR/html5/syntax.html
 
 Input Parameters:
  content - scalar presumably containing both html and css
@@ -314,7 +312,7 @@ sub detect_charset {
   return $charset;
 }
 
-=item decode_characters
+=head2 decode_characters
 
 Implement the character decoding algorithm for HTML as outlined by the various working groups
 
@@ -356,7 +354,7 @@ sub decode_characters {
   return $decoded_html;
 }
 
-=item inlinify
+=head2 inlinify
 
 Processes the html data that was entered through either 'read' or
 'read_file', returns a scalar that contains a composite chunk of html
@@ -485,7 +483,7 @@ sub inlinify {
   return $html . "\n";
 }
 
-=item query
+=head2 query
 
 Given a particular selector return back the applicable styles
 
@@ -503,7 +501,7 @@ sub query {
   return $self->_query->query($$params{selector});
 }
 
-=item specificity
+=head2 specificity
 
 Given a particular selector return back the associated selectivity
 
@@ -521,14 +519,12 @@ sub specificity {
   return $self->_query->get_specificity($$params{selector});
 }
 
-=item content_warnings
+=head2 content_warnings
 
 Return back any warnings thrown while inlining a given block of content.
 
 Note: content warnings are initialized at inlining time, not at read time. In
 order to receive back content feedback you must perform inlinify first
-
-=back
 
 =cut
 
@@ -1028,12 +1024,13 @@ http://www.mailermailer.com/
 
 =head1 AUTHOR
 
-Kevin Kamel <kamelkev@mailermailer.com>
+ Kevin Kamel <kamelkev@mailermailer.com>
 
 =head1 CONTRIBUTORS
 
-Vivek Khera <vivek@khera.org>, Michael Peters <wonko@cpan.org>,
-Dave Gray <cpan@doesntsuck.com>
+ Vivek Khera <vivek@khera.org>
+ Michael Peters <wonko@cpan.org>
+ Dave Gray <cpan@doesntsuck.com>
 
 =head1 LICENSE
 
