@@ -5,10 +5,16 @@ use lib qw( ./lib ../lib );
 use Test::More;
 use Cwd;
 use CSS::Inliner;
+use LWP::Simple;
 
 use FindBin qw($Bin);
 
-plan(tests => 1);
+eval {
+  get('http://rawgit.com') or die $@;
+};
+
+# conditional test plan based on whether or not the endpoint can be reached - frequently can't by cpan testers
+plan $@ ? (skip_all => 'Connectivity for endpoint required for test cannot be established') : (tests => 1);
 
 my $html_path = "$Bin/html/";
 my $test_url = 'http://rawgit.com/kamelkev/CSS-Inliner/master/t/html/embedded_style.html';

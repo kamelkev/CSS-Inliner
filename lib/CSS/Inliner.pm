@@ -5,15 +5,13 @@ use warnings;
 our $VERSION = '3958';
 
 use Carp;
-
 use Encode;
 use LWP::UserAgent;
+use HTML::Query 'query';
 use URI;
 
-use HTML::Query 'query';
-
-use CSS::Inliner::TreeBuilder;
 use CSS::Inliner::Parser;
+use CSS::Inliner::TreeBuilder;
 
 =pod
 
@@ -41,7 +39,7 @@ support top level <style> declarations.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','entities','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent'];
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent','charset'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -61,14 +59,10 @@ BEGIN {
 
 =head1 METHODS
 
-=over
-
-=item E<32>new
+=head2 new
 
 Instantiates the Inliner object. Sets up class variables that are used
 during file parsing/processing. Possible options are:
-
-entities - (optional) Pass in a string containing characters to entity encode in all output, overrides the internal default provided by the module
 
 html_tree - (optional) Pass in a fresh unparsed instance of HTML::Treebuilder
 
@@ -103,38 +97,29 @@ sub new {
     croak 'Incompatible argument passed to new: "html_tree"';
   }
 
-  if (defined $$params{entities} && ref $$params{entities}) {
-    croak 'Incompatible argument passed to new: "entities"';
-  }
-
   my $self = {
     stylesheet => undef,
     css => CSS::Inliner::Parser->new({ warns_as_errors => $$params{warns_as_errors} }),
     html => undef,
     html_tree => defined($$params{html_tree}) ? $$params{html_tree} : CSS::Inliner::TreeBuilder->new(),
-    entities => defined($$params{entities}) ? $$params{entities} : q@^\n\r\t !\#\$%\(-;=?-~'@,
     query => undef,
     content_warnings => {},
     strip_attrs => (defined($$params{strip_attrs}) && $$params{strip_attrs}) ? 1 : 0,
     relaxed => (defined($$params{relaxed}) && $$params{relaxed}) ? 1 : 0,
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
     warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
-    agent => (defined($$params{agent}) && $$params{agent}) ? $$params{agent} : 'Mozilla/4.0'
+    agent => (defined($$params{agent}) && $$params{agent}) ? $$params{agent} : 'Mozilla/4.0',
+    charset => undef
   };
 
   bless $self, $class;
 
-  # configure tree
-  $self->_html_tree->store_comments(1);
-  if ($self->_relaxed()) {
-    $self->_html_tree->ignore_unknown(0);
-    $self->_html_tree->implicit_tags(0);
-  }
+  $self->_configure_tree({ tree => $self->_html_tree });
 
   return $self;
 }
 
-=item fetch_file
+=head2 fetch_file
 
 Fetches a remote HTML file that supposedly contains both HTML and a
 style declaration, properly tags the data with the proper characterset
@@ -153,6 +138,10 @@ Note that you can specify a user-agent to override the default user-agent
 of 'Mozilla/4.0' within the constructor. Doing so may avoid certain issues
 with agent filtering related to quirky webserver configs.
 
+Input Parameters:
+ url - the desired url for a remote asset presumably containing both html and css
+ charset - (optional) programmer specified charset for the pass url
+
 =cut
 
 sub fetch_file {
@@ -164,14 +153,21 @@ sub fetch_file {
     croak 'You must pass in hash params that contain a url argument';
   }
 
-  my $html = $self->_fetch_html({ url => $$params{url} });
+  # fetch and retrieve the remote content
+  my ($content,$baseref,$ctcharset) = $self->_fetch_url({ url => $$params{url} });
 
-  $self->read({ html => $html });
+  my $charset = $self->detect_charset({ content => $content, charset => $$params{charset}, ctcharset => $ctcharset });
+
+  my $decoded_html = $self->decode_characters({ content => $content, charset => $charset });
+
+  my $html = $self->_absolutize_references({ content => $decoded_html, baseref => $baseref });
+
+  $self->read({ html => $html, charset => $charset });
 
   return();
 }
 
-=item read_file
+=head2 read_file
 
 Opens and reads an HTML file that supposedly contains both HTML and a
 style declaration.  It subsequently calls the read() method
@@ -187,6 +183,10 @@ example:
 
 $self->read_file({ filename => 'myfile.html', charset => 'utf8' });
 
+Input Parameters:
+ filename - name of local file presumably containing both html and css
+ charset - (optional) programmer specified charset of the passed file
+
 =cut
 
 sub read_file {
@@ -195,26 +195,22 @@ sub read_file {
   $self->_check_object();
 
   unless ($params && $$params{filename}) {
-    croak 'You must pass in hash params that contain a filename argument';
+    croak "You must pass in hash params that contain a filename argument";
   }
 
-  open FILE, "<", $$params{filename} or croak $!;
-  my $content = do { local( $/ ) ; <FILE> } ;
+  open FILE, "<", $$params{filename} or die $!;
+  my $content = do { local( $/ ) ; <FILE> };
 
-  my $html;
-  if (defined($$params{charset}) && $$params{charset} && find_encoding($$params{charset}) ) {
-    $html = decode($$params{charset}, $content);
-  }
-  else {
-    $html = $content; # best we can do, no encoding specified
-  }
+  my $charset = $self->detect_charset({ content => $content, charset => $$params{charset} });
 
-  $self->read({ html => $html });
+  my $decoded_html = $self->decode_characters({ content => $content, charset => $charset });
+
+  $self->read({ html => $decoded_html, charset => $charset });
 
   return();
 }
 
-=item read
+=head2 read
 
 Reads passed html data and parses it.  The intermediate data is stored in
 class variables.
@@ -231,6 +227,10 @@ NOTE: You are required to pass a properly encoded perl reference to the
 html data. This method does *not* do the dirty work of encoding the html
 as utf8 - do that before calling this method.
 
+Input Parameters:
+ html - scalar presumably containing both html and css
+ charset - (optional) scalar representing the original charset of the passed html
+
 =cut
 
 sub read {
@@ -242,9 +242,14 @@ sub read {
     croak 'You must pass in hash params that contains html data';
   }
 
+  if ($params && $$params{charset} && !find_encoding($$params{charset})) {
+    croak "Invalid charset passed to read()";
+  }
+
   $self->_html_tree->parse_content($$params{html});
 
   $self->_init_query();
+  $self->_charset($$params{charset});
 
   #suck in the styles for later use from the head section - stylesheets anywhere else are invalid
   my $stylesheet = $self->_parse_stylesheet();
@@ -256,7 +261,100 @@ sub read {
   return();
 }
 
-=item inlinify
+=head2 detect_charset
+
+Detect the charset of the passed content.
+
+The algorithm present here is roughly based off of the HTML5 W3C working group document,
+which lays out a recommendation for determining the character set of a received document, which
+can be seen here under the "determining the character encoding" section:
+http://www.w3.org/TR/html5/syntax.html
+
+Input Parameters:
+ content - scalar presumably containing both html and css
+ charset - (optional) programmer specified charset for the passed content
+ ctcharset - (optional) content-type specified charset for content retrieved via a url
+
+=cut
+
+sub detect_charset {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  unless ($params && $$params{content}) {
+    croak "You must pass content for content character decoding";
+  }
+
+  my $charset;
+  if (exists($$params{charset}) && $$params{charset} && find_encoding($$params{charset})) {
+    # precedence given to programmer provided charset
+    $charset = $$params{charset};
+  }
+  elsif (exists($$params{ctcharset}) && $$params{ctcharset} && find_encoding($$params{ctcharset})) {
+    # use the Content-Type charset if available
+    $charset = $$params{ctcharset};
+  }
+  else {
+    # analyze the document to scan for any meta charset hints we can use
+    my $meta_charset = $self->_extract_meta_charset({ content => $$params{content} });
+
+    if ($meta_charset && find_encoding($meta_charset)) {
+      # use the meta charset from the document if available
+      $charset = $meta_charset;
+    }
+    else {
+      # no hints found, assume ascii until support for additional steps from the working group is added
+      $charset = 'ascii';
+    }
+  }
+
+  return $charset;
+}
+
+=head2 decode_characters
+
+Implement the character decoding algorithm for HTML as outlined by the various working groups
+
+Basically apply best practices for determining the applied character encoding and properly decode it
+
+It is expected that this method will be called before any calls to read()
+
+Input Parameters:
+ content - scalar presumably containing both html and css
+ charset - known charset for the passed content
+
+=cut
+
+sub decode_characters {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  unless ($params && $$params{content}) {
+    croak "You must pass content for content character decoding";
+  }
+
+  unless ($params && $$params{charset}) {
+    croak "You must pass the charset type of the content to decode";
+  }
+
+  my $content = $$params{content};
+  my $charset = $$params{charset};
+
+  my $decoded_html;
+  eval {
+    $decoded_html = decode($charset,$content);
+  };
+
+  if (!$decoded_html) {
+    croak('Error decoding content with character set "'.$$params{charset}.'"');
+  }
+
+  return $decoded_html;
+}
+
+=head2 inlinify
 
 Processes the html data that was entered through either 'read' or
 'read_file', returns a scalar that contains a composite chunk of html
@@ -375,13 +473,8 @@ sub inlinify {
     #BUT we need to collapse the declarations to remove duplicate overridden styles
     $self->_collapse_inline_styles();
 
-    # The entities list is the do-not-encode string from HTML::Entities
-    # with the single quote added.
-
-    # 3rd argument overrides the optional end tag, which for HTML::Element
-    # is just p, li, dt, dd - tags we want terminated for our purposes
-
-    $html = $self->_html_tree->as_HTML($self->_entities(),' ',{});
+    # dump out the final processed html for returning to the caller
+    $html = $self->_html_tree->as_HTML('',' ',{});
   }
   else {
     $html = $self->{html};
@@ -390,7 +483,7 @@ sub inlinify {
   return $html . "\n";
 }
 
-=item query
+=head2 query
 
 Given a particular selector return back the applicable styles
 
@@ -408,7 +501,7 @@ sub query {
   return $self->_query->query($$params{selector});
 }
 
-=item specificity
+=head2 specificity
 
 Given a particular selector return back the associated selectivity
 
@@ -426,14 +519,12 @@ sub specificity {
   return $self->_query->get_specificity($$params{selector});
 }
 
-=item content_warnings
+=head2 content_warnings
 
 Return back any warnings thrown while inlining a given block of content.
 
 Note: content warnings are initialized at inlining time, not at read time. In
 order to receive back content feedback you must perform inlinify first
-
-=back
 
 =cut
 
@@ -462,7 +553,7 @@ sub _check_object {
    croak 'You must instantiate this class in order to properly use it';
   }
 
-  return ();
+  return();
 }
 
 sub _report_warning {
@@ -481,6 +572,25 @@ sub _report_warning {
   return();
 }
 
+sub _configure_tree {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  my $tree = $$params{tree};
+
+  # configure tree
+  $tree->store_comments(1);
+  $tree->attr_encoded(1);
+  $tree->no_expand_entities(1);
+  if ($self->_relaxed()) {
+    $tree->ignore_unknown(0);
+    $tree->implicit_tags(0);
+  }
+
+  return();
+}
+
 sub _fetch_url {
   my ($self,$params) = @_;
 
@@ -491,6 +601,9 @@ sub _fetch_url {
 
   $ua->agent($self->_agent()); # masquerade as Mozilla/4.0 unless otherwise specified in the constructor
   $ua->protocols_allowed( ['http','https'] );
+
+  # set URI internal flag such that leading dot edge-case urls work
+  local $URI::ABS_REMOTE_LEADING_DOTS = 1;
 
   # Create a request
   my $uri = URI->new($$params{url});
@@ -510,48 +623,37 @@ sub _fetch_url {
     croak 'The web site address you entered is not an HTML document.';
   }
 
-  my $content;
-  if ($res->content_type_charset && find_encoding($res->content_type_charset)->name) {
-    $content = decode($res->content_type_charset, $res->content || '');
-  }
-  else {
-    $content = $res->content || ''; # best we can do, no encoding given
-  }
-
-  # Expand all URLs to absolute ones
+  # record the content, charset and baseref of the response
+  my $ctcharset = $res->content_type_charset();
+  my $content = $res->content || '';
   my $baseref = $res->base;
 
-  return ($content,$baseref);
+  return ($content,$baseref,$ctcharset);
 }
 
-sub _fetch_html {
+sub _absolutize_references {
   my ($self,$params) = @_;
 
   $self->_check_object();
 
-  my $url = ($$params{url} =~ m/^https?:\/\//) ? $$params{url} : 'http://' . $$params{url};
+  # parse the protected document, we need to localize it
+  my $absolutize_tree = new CSS::Inliner::TreeBuilder();
+  $self->_configure_tree({ tree => $absolutize_tree });
 
-  my ($content,$baseref) = $self->_fetch_url({ url => $url });
-
-  # Build "relaxed" HTML tree using internal treebuilder - we want to return html that is as
-  # close to the original as possible. We can more strictly parse this later if necessary
-  my $doc = CSS::Inliner::TreeBuilder->new();
-  $doc->store_comments(1);
-  $doc->ignore_unknown(0);
-  $doc->implicit_tags(0);
-  $doc->parse_content($content);
+  $absolutize_tree->parse_content($$params{content});
 
   # Change relative links to absolute links
-  $self->_changelink_relative({ content => $doc->content, baseref => $baseref });
+  $self->__changelink_relative({ content => $absolutize_tree->content(), baseref => $$params{baseref} });
 
-  $self->_expand_stylesheet({ content => $doc, html_baseref => $baseref });
+  $self->__expand_stylesheet({ content => $absolutize_tree, html_baseref => $$params{baseref} });
 
-  my $html = $doc->as_HTML($self->_entities(),' ',{});
+  # dump out the final processed html for reading
+  my $absolutized_content = $absolutize_tree->as_HTML('',' ',{});
 
-  return $html;
+  return $absolutized_content;
 }
 
-sub _changelink_relative {
+sub __changelink_relative {
   my ($self,$params) = @_;
 
   $self->_check_object();
@@ -592,7 +694,7 @@ sub _changelink_relative {
 
     # Recurse down tree
     if (defined $i->content) {
-      $self->_changelink_relative({ content => $i->content, baseref => $base });
+      $self->__changelink_relative({ content => $i->content, baseref => $base });
     }
   }
 }
@@ -607,7 +709,7 @@ sub __fix_relative_url {
   return $$params{prefix} . "'" . $uri->abs($$params{base})->as_string ."'";
 }
 
-sub _expand_stylesheet {
+sub __expand_stylesheet {
   my ($self,$params) = @_;
 
   $self->_check_object();
@@ -678,6 +780,7 @@ sub _validate_html {
   my ($self,$params) = @_;
 
   my $validator_tree = new CSS::Inliner::TreeBuilder();
+
   $validator_tree->ignore_unknown(0);
   $validator_tree->implicit_tags(0);
   $validator_tree->parse_content($$params{html});
@@ -821,6 +924,40 @@ sub _collapse_inline_styles {
   }
 }
 
+sub _extract_meta_charset {
+  my ($self,$params) = @_;
+
+  $self->_check_object();
+
+  # we are going to parse an html document as ascii that is not necessarily ascii - silence the warning
+  local $SIG{__WARN__} = sub { my $warning = shift; warn $warning unless $warning =~ /^Parsing of undecoded UTF-8/ };
+
+  # parse document and pull out key header elements
+  my $doc = HTML::TreeBuilder->new();
+  $doc->parse_content($$params{content});
+
+  my $head = $doc->look_down("_tag", "head"); # there should only be one
+
+  # pull key header meta elements
+  my $meta_charset_elem = $head->look_down('_tag','meta','charset',qr/./);
+  my $meta_equiv_charset_elem = $head->look_down('_tag','meta','http-equiv',qr/content-type/i,'content',qr/./);
+
+  # assign meta charset, we give precedence to meta http_equiv content type
+  my $meta_charset;
+  if ($meta_equiv_charset_elem) {
+    my $meta_equiv_content = $meta_equiv_charset_elem->attr('content');
+
+    if ($meta_equiv_content =~ /charset=(.*)(?:[";,]?)/i) {
+      $meta_charset = $1;
+    }
+  }
+  elsif ($meta_charset_elem) {
+    $meta_charset = $meta_charset_elem->attr('charset');
+  }
+
+  return $meta_charset;
+}
+
 sub _init_query {
   my ($self,$params) = @_;
 
@@ -887,11 +1024,14 @@ http://www.mailermailer.com/
 
 =head1 AUTHOR
 
-Kevin Kamel <kamelkev@mailermailer.com>
+ Kevin Kamel <kamelkev@mailermailer.com>
 
 =head1 CONTRIBUTORS
 
-Vivek Khera <vivek@khera.org>, Michael Peters <wonko@cpan.org>
+ Dave Gray <cpan@doesntsuck.com>
+ Vivek Khera <vivek@khera.org>
+ Michael Peters <wonko@cpan.org>
+ Chelsea Rio <chelseario@gmail.com>
 
 =head1 LICENSE
 
