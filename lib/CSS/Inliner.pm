@@ -2,7 +2,7 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-our $VERSION = '3958';
+our $VERSION = '4001';
 
 use Carp;
 use Encode;
