@@ -1028,9 +1028,10 @@ http://www.mailermailer.com/
 
 =head1 CONTRIBUTORS
 
+ Dave Gray <cpan@doesntsuck.com>
  Vivek Khera <vivek@khera.org>
  Michael Peters <wonko@cpan.org>
- Dave Gray <cpan@doesntsuck.com>
+ Chelsea Rio <chelseario@gmail.com>
 
 =head1 LICENSE
 
