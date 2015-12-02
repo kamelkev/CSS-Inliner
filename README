@@ -45,9 +45,9 @@ METHODS
 
   fetch_file
     Fetches a remote HTML file that supposedly contains both HTML and a
-    style declaration, properly tags the data with the proper characterset
-    as provided by the remote webserver (if any). Subsequently calls the
-    read method automatically.
+    style declaration, properly tags the data with the proper charset as
+    provided by the remote webserver (if any). Subsequently calls the read
+    method automatically.
 
     This method expands all relative urls, as well as fully expands the
     stylesheet reference within the document.
@@ -67,8 +67,8 @@ METHODS
 
   read_file
     Opens and reads an HTML file that supposedly contains both HTML and a
-    style declaration. It subsequently calls the read() method
-    automatically.
+    style declaration, properly tags the data with the proper charset if
+    specified. It subsequently calls the read() method automatically.
 
     This method requires you to pass in a params hash that contains a
     filename argument. For example:
@@ -112,6 +112,12 @@ METHODS
     character set of a received document, which can be seen here under the
     "determining the character encoding" section:
     http://www.w3.org/TR/html5/syntax.html
+
+    NOTE: In the event that no charset can be identified the library will
+    handle the content as a mix of UTF-8/CP-1252/8859-1/ASCII by attempting
+    to use the Encoding::FixLatin module, as this combination is relatively
+    common in the wild. Finally, if Encoding::FixLatin is unavailable the
+    content will be treated as ASCII.
 
     Input Parameters: content - scalar presumably containing both html and
     css charset - (optional) programmer specified charset for the passed

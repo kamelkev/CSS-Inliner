@@ -2,7 +2,7 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-our $VERSION = '4001';
+our $VERSION = '4002';
 
 use Carp;
 use Encode;
@@ -39,7 +39,7 @@ support top level <style> declarations.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent','charset'];
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent','fixlatin'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -109,7 +109,7 @@ sub new {
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
     warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
     agent => (defined($$params{agent}) && $$params{agent}) ? $$params{agent} : 'Mozilla/4.0',
-    charset => undef
+    fixlatin => eval { require Encoding::FixLatin; return 1; } ? 1 : 0
   };
 
   bless $self, $class;
@@ -122,7 +122,7 @@ sub new {
 =head2 fetch_file
 
 Fetches a remote HTML file that supposedly contains both HTML and a
-style declaration, properly tags the data with the proper characterset
+style declaration, properly tags the data with the proper charset
 as provided by the remote webserver (if any). Subsequently calls the
 read method automatically.
 
@@ -158,7 +158,21 @@ sub fetch_file {
 
   my $charset = $self->detect_charset({ content => $content, charset => $$params{charset}, ctcharset => $ctcharset });
 
-  my $decoded_html = $self->decode_characters({ content => $content, charset => $charset });
+  my $decoded_html;
+  if ($charset) {
+    $decoded_html = $self->decode_characters({ content => $content, charset => $charset });
+  }
+  else {
+    # no good hints found, do the best we can
+
+    if ($self->_fixlatin()) {
+      Encoding::FixLatin->import('fix_latin');
+      $decoded_html = fix_latin($content);
+    }
+    else {
+      $decoded_html = $self->decode_characters({ content => $content, charset => 'ascii' });
+    }
+  }
 
   my $html = $self->_absolutize_references({ content => $decoded_html, baseref => $baseref });
 
@@ -170,8 +184,8 @@ sub fetch_file {
 =head2 read_file
 
 Opens and reads an HTML file that supposedly contains both HTML and a
-style declaration.  It subsequently calls the read() method
-automatically.
+style declaration, properly tags the data with the proper charset
+if specified. It subsequently calls the read() method automatically.
 
 This method requires you to pass in a params hash that contains a
 filename argument. For example:
@@ -203,7 +217,21 @@ sub read_file {
 
   my $charset = $self->detect_charset({ content => $content, charset => $$params{charset} });
 
-  my $decoded_html = $self->decode_characters({ content => $content, charset => $charset });
+  my $decoded_html;
+  if ($charset) {
+    $decoded_html = $self->decode_characters({ content => $content, charset => $charset });
+  }
+  else {
+    # no good hints found, do the best we can
+
+    if ($self->_fixlatin()) {
+      Encoding::FixLatin->import('fix_latin');
+      $decoded_html = fix_latin($content);
+    }
+    else {
+      $decoded_html = $self->decode_characters({ content => $content, charset => 'ascii' });
+    }
+  }
 
   $self->read({ html => $decoded_html, charset => $charset });
 
@@ -249,7 +277,6 @@ sub read {
   $self->_html_tree->parse_content($$params{html});
 
   $self->_init_query();
-  $self->_charset($$params{charset});
 
   #suck in the styles for later use from the head section - stylesheets anywhere else are invalid
   my $stylesheet = $self->_parse_stylesheet();
@@ -269,6 +296,11 @@ The algorithm present here is roughly based off of the HTML5 W3C working group d
 which lays out a recommendation for determining the character set of a received document, which
 can be seen here under the "determining the character encoding" section:
 http://www.w3.org/TR/html5/syntax.html
+
+NOTE: In the event that no charset can be identified the library will handle the content as a mix of
+UTF-8/CP-1252/8859-1/ASCII by attempting to use the Encoding::FixLatin module, as this combination
+is relatively common in the wild. Finally, if Encoding::FixLatin is unavailable the content will be
+treated as ASCII.
 
 Input Parameters:
  content - scalar presumably containing both html and css
@@ -304,8 +336,7 @@ sub detect_charset {
       $charset = $meta_charset;
     }
     else {
-      # no hints found, assume ascii until support for additional steps from the working group is added
-      $charset = 'ascii';
+      # no hints found...
     }
   }
 
@@ -938,21 +969,23 @@ sub _extract_meta_charset {
 
   my $head = $doc->look_down("_tag", "head"); # there should only be one
 
-  # pull key header meta elements
-  my $meta_charset_elem = $head->look_down('_tag','meta','charset',qr/./);
-  my $meta_equiv_charset_elem = $head->look_down('_tag','meta','http-equiv',qr/content-type/i,'content',qr/./);
-
-  # assign meta charset, we give precedence to meta http_equiv content type
   my $meta_charset;
-  if ($meta_equiv_charset_elem) {
-    my $meta_equiv_content = $meta_equiv_charset_elem->attr('content');
+  if ($head) {
+    # pull key header meta elements
+    my $meta_charset_elem = $head->look_down('_tag','meta','charset',qr/./);
+    my $meta_equiv_charset_elem = $head->look_down('_tag','meta','http-equiv',qr/content-type/i,'content',qr/./);
 
-    if ($meta_equiv_content =~ /charset=(.*)(?:[";,]?)/i) {
-      $meta_charset = $1;
+    # assign meta charset, we give precedence to meta http_equiv content type
+    if ($meta_equiv_charset_elem) {
+      my $meta_equiv_content = $meta_equiv_charset_elem->attr('content');
+
+      if ($meta_equiv_content =~ /charset=(.*)(?:[";,]?)/i) {
+        $meta_charset = $1;
+      }
     }
-  }
-  elsif ($meta_charset_elem) {
-    $meta_charset = $meta_charset_elem->attr('charset');
+    elsif ($meta_charset_elem) {
+      $meta_charset = $meta_charset_elem->attr('charset');
+    }
   }
 
   return $meta_charset;

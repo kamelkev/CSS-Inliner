@@ -211,12 +211,13 @@
 		- Adds proper headers for remote fetching of files
 	* Fix issues within pod documentation
 
-4001	2015-11-23	Kevin Kamel <kamelkev@mailermailer.com>
+4002	2015-11-23	Kevin Kamel <kamelkev@mailermailer.com>
 	* Update POD within Inliner.pm such that it generates more consistent documentation for CPAN/GitHub
 	* Set URI flag allowing urls containing leading dots to be handled correctly
 	* Extend support for foreign character sets
 		- implement charset detection algorithm, roughly based off of HTML5 W3C specification
 		- implement character encoding/decoding based upon detected charset
+		- implement fallback mode for when no charset is detected, leverage Encoding::FixLatin if available
 		- add tests for exercising new charset related features
 		- update documentation regarding new methods to support foreign charsets
 	* Add reference to contributor Dave Gray (cpan@doesntsuck.com) to contributors section
