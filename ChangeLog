@@ -231,3 +231,9 @@
 	* Update MANIFEST to reference all added tests/assets
 	* Fix minor formatting issues within some tests/assets
         * Address concerns raised by CPAN RT96414, conditionally test for connectivity instead of outright failing
+
+4003	2015-12-16	Kevin Kamel <kamelkev@mailermailer.com>
+	* Resolve charset sniffing issue
+		- invalid charset present within the document would cause charset sniffing to end prematurely
+		- invalid charset present within the document would cause Inliner to die during the decode phase
+	* Resolve issue whereby a TreeBuilder instance was not configured as expected

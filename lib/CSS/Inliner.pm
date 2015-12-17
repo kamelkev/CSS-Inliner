@@ -2,7 +2,7 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-our $VERSION = '4002';
+our $VERSION = '4003';
 
 use Carp;
 use Encode;
@@ -964,10 +964,12 @@ sub _extract_meta_charset {
   local $SIG{__WARN__} = sub { my $warning = shift; warn $warning unless $warning =~ /^Parsing of undecoded UTF-8/ };
 
   # parse document and pull out key header elements
-  my $doc = HTML::TreeBuilder->new();
-  $doc->parse_content($$params{content});
+  my $extract_tree = new CSS::Inliner::TreeBuilder();
+  $self->_configure_tree({ tree => $extract_tree });
 
-  my $head = $doc->look_down("_tag", "head"); # there should only be one
+  $extract_tree->parse_content($$params{content});
+
+  my $head = $extract_tree->look_down("_tag", "head"); # there should only be one
 
   my $meta_charset;
   if ($head) {
@@ -979,12 +981,14 @@ sub _extract_meta_charset {
     if ($meta_equiv_charset_elem) {
       my $meta_equiv_content = $meta_equiv_charset_elem->attr('content');
 
-      if ($meta_equiv_content =~ /charset=(.*)(?:[";,]?)/i) {
-        $meta_charset = $1;
+      # leverage charset allowable chars from https://tools.ietf.org/html/rfc2978
+      if ($meta_equiv_content =~ /charset(?:\s*)=(?:\s*)([\w!#$%&'\-+^`{}~]+)/i) {
+        $meta_charset = find_encoding($1);
       }
     }
-    elsif ($meta_charset_elem) {
-      $meta_charset = $meta_charset_elem->attr('charset');
+
+    if (!defined($meta_charset) && $meta_charset_elem) {
+      $meta_charset = find_encoding($meta_charset_elem->attr('charset'));
     }
   }
 
