@@ -1,5 +1,3 @@
-# Copyright 2015 MailerMailer, LLC - http://www.mailermailer.com
-#
 # Based in large part on the CSS::Tiny CPAN Module
 # http://search.cpan.org/~adamk/CSS-Tiny/
 #
@@ -504,13 +502,9 @@ sub _report_warning {
 
 =back
 
-=head1 Sponsor
-
-This code has been developed under sponsorship of MailerMailer LLC, http://www.mailermailer.com/
-
 =head1 AUTHOR
 
-Kevin Kamel <C<kamelkev@mailermailer.com>>
+Kevin Kamel <C<kamelkev@underprint.com>>
 
 =head1 ATTRIBUTION
 

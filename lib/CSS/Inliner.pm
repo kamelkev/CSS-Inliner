@@ -2,7 +2,7 @@ package CSS::Inliner;
 use strict;
 use warnings;
 
-our $VERSION = '4007';
+our $VERSION = '4008';
 
 use Carp;
 use Encode;
@@ -1057,14 +1057,9 @@ sub _grep_important_declarations {
 
 1;
 
-=head1 Sponsor
-
-This code has been developed under sponsorship of MailerMailer LLC,
-http://www.mailermailer.com/
-
 =head1 AUTHOR
 
- Kevin Kamel <kamelkev@mailermailer.com>
+ Kevin Kamel <kamelkev@underprint.com>
 
 =head1 CONTRIBUTORS
 
@@ -1075,7 +1070,7 @@ http://www.mailermailer.com/
 
 =head1 LICENSE
 
-This module is Copyright 2015 Khera Communications, Inc.  It is
+This module is Copyright 2017 Khera Communications, Inc. It is
 licensed under the same terms as Perl itself.
 
 =cut
