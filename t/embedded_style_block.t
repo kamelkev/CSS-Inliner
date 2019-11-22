@@ -27,4 +27,4 @@ my $inliner = CSS::Inliner->new();
 $inliner->fetch_file({ url => $test_url });
 my $inlined = $inliner->inlinify();
 
-ok($inlined eq $correct_result, 'result was correct');
+is($inlined, $correct_result, 'result was correct');
