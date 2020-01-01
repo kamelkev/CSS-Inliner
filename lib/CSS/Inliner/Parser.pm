@@ -8,12 +8,12 @@
 
 package CSS::Inliner::Parser;
 
- use strict;
- use warnings;
+use strict;
+use warnings;
 
- use Carp;
+use Carp;
 
- use Storable qw(dclone);
+use Storable qw(dclone);
 
 =pod
 
