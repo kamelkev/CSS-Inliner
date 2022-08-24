@@ -220,7 +220,7 @@ sub read {
         $rule =~ s/\s{2,}/ /g;
 
         # Split into properties
-        my $properties = {};
+        my $properties = [];
         foreach (grep { /\S/ } split /\;/, $props) {
           # skip over browser specific properties
           if ((/^\s*[\*\-\_]/) || (/\\/)) {
@@ -234,7 +234,7 @@ sub read {
           }
 
           #store the property for later
-          $$properties{lc $1} = $2;
+          push @$properties, lc $1, $2;
         }
 
         my @selectors = split /,/, $rule; # break the rule into the component selector(s)
@@ -313,8 +313,8 @@ sub write {
       my $declarations = $$rule{declarations};
 
       $contents .= "$selector {\n";
-      foreach my $property ( sort keys %{ $declarations } ) {
-        $contents .= "  " . lc($property) . ": ".$$declarations{$property}. ";\n";
+      for ( my $i = 0; $i < @$declarations; $i+=2 ) {
+        $contents .= "  " . lc($declarations->[$i]) . ": ".$declarations->[$i+1]. ";\n";
       }
       $contents .= "}\n";
     }
