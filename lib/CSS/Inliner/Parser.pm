@@ -188,7 +188,7 @@ sub read {
         
         unshift(@tokens, $3);
       }
-      elsif ($token =~ /^\s*(\@[\w-]+)\s+{\s*([^{]*)}$/) {
+      elsif ($token =~ /^\s*(\@[\w-]+)\s*{\s*([^{]*)}$/) {
         # multiline at-rules without a prelude, nothing to protect here
 
         $self->add_at_rule({ type => $1, prelude => undef, block => $2 });
