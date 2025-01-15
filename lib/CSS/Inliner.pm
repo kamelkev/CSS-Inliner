@@ -12,6 +12,7 @@ use URI;
 
 use CSS::Inliner::Parser;
 use CSS::Inliner::TreeBuilder;
+use HTML::Entities;
 
 =pod
 
@@ -492,7 +493,7 @@ sub inlinify {
 
       # styles already inlined have greater precedence
       if (defined($element->attr('style'))) {
-        my $cur_style = $self->_split({ style => $element->attr('style') });
+        my $cur_style = $self->_split({ style => decode_entities($element->attr('style')) });
         push @new_style, @$cur_style;
         push @new_important_style, _grep_important_declarations($cur_style);
       }
@@ -500,7 +501,7 @@ sub inlinify {
       # override styles with !important styles
       push @new_style, @new_important_style;
 
-      $element->attr('style', $self->_expand({ declarations => \@new_style }));
+      $element->attr('style', encode_entities($self->_expand({ declarations => \@new_style })));
     }
 
     #at this point we have a document that contains the expanded inlined stylesheet
@@ -930,7 +931,7 @@ sub _collapse_inline_styles {
     if ($i->attr('style')) {
 
       #flatten out the styles currently in place on this entity
-      my $existing_styles = $i->attr('style');
+      my $existing_styles = decode_entities($i->attr('style'));
       $existing_styles =~ tr/\n\t/  /;
 
       # hold the property value pairs
@@ -948,7 +949,7 @@ sub _collapse_inline_styles {
       }
 
       $collapsed_style =~ s/\s*$//;
-      $i->attr('style', $collapsed_style);
+      $i->attr('style', encode_entities($collapsed_style));
     }
 
     #if we have specifically asked to remove the inlined attrs, remove them
