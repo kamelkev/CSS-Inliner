@@ -785,7 +785,7 @@ sub __expand_stylesheet {
     #absolutized the assetts within the stylesheet that are relative
     $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({ prefix => $1, url => $2, base => $baseref })/exsgi;
 
-    my $stylesheet = HTML::Element->new('style', type => 'text/css', rel=> 'stylesheet');
+    my $stylesheet = HTML::Element->new('style');
     $stylesheet->push_content($content);
 
     $i->replace_with($stylesheet);
@@ -801,7 +801,7 @@ sub __expand_stylesheet {
     # absolutize the assets within the stylesheet that are relative
     $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({ prefix => $1, url => $2, base => $baseref })/exsgi;
 
-    my $stylesheet = HTML::Element->new('style', type => 'text/css', rel=> 'stylesheet');
+    my $stylesheet = HTML::Element->new('style');
     $stylesheet->push_content($content);
 
     $i->replace_with($stylesheet);
@@ -870,7 +870,7 @@ sub _validate_html {
 
     if ($body) {
       # located spurious <style> tags that won't be handled
-      my @spurious_style = $body->look_down('_tag','style','type','text/css');
+      my @spurious_style = $body->look_down('_tag','style');
 
       if (scalar @spurious_style) {
         $self->_report_warning({ info => 'Unexpected reference to stylesheet within document body skipped' });
@@ -892,7 +892,7 @@ sub _parse_stylesheet {
   my $stylesheet_root = $self->_relaxed() ? $self->_html_tree() : $self->_html_tree->look_down('_tag', 'head');
 
   # get the <style> nodes
-  my @style = $stylesheet_root->look_down('_tag','style','type','text/css');
+  my @style = $stylesheet_root->look_down('_tag','style');
 
   foreach my $i (@style) {
     #process this node if the html media type is screen, all or undefined (which defaults to screen)
