@@ -43,7 +43,7 @@ sponsoring entity, MailerMailer LLC, has been sold to j2 Global.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent','fixlatin'];
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent','fixlatin','encode_entities'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -77,6 +77,8 @@ strip_attrs - (optional) Remove all "id" and "class" attributes during inlining
 leave_style - (optional) Leave style/link tags alone within <head> during inlining
 
 relaxed - (optional) Relaxed HTML parsing which will attempt to interpret non-HTML4 documents.
+
+encode_entities - (optional) Encode generated inline-styles (in case they contain HTML meta characters)
 
 NOTE: This argument is not compatible with passing an html_tree.
 
@@ -113,7 +115,8 @@ sub new {
     leave_style => (defined($$params{leave_style}) && $$params{leave_style}) ? 1 : 0,
     warns_as_errors => (defined($$params{warns_as_errors}) && $$params{warns_as_errors}) ? 1 : 0,
     agent => (defined($$params{agent}) && $$params{agent}) ? $$params{agent} : 'Mozilla/4.0',
-    fixlatin => eval { require Encoding::FixLatin; return 1; } ? 1 : 0
+    fixlatin => eval { require Encoding::FixLatin; return 1; } ? 1 : 0,
+    encode_entities => (defined($$params{encode_entities}) && $$params{encode_entities}) ? 1 : 0,
   };
 
   bless $self, $class;
@@ -493,7 +496,13 @@ sub inlinify {
 
       # styles already inlined have greater precedence
       if (defined($element->attr('style'))) {
-        my $cur_style = $self->_split({ style => decode_entities($element->attr('style')) });
+        my $cur_style = $self->_split(
+            {
+                style => $self->_encode_entities
+                ? decode_entities($element->attr('style'))
+                : $element->attr('style')
+            }
+        );
         push @new_style, @$cur_style;
         push @new_important_style, _grep_important_declarations($cur_style);
       }
@@ -501,7 +510,8 @@ sub inlinify {
       # override styles with !important styles
       push @new_style, @new_important_style;
 
-      $element->attr('style', encode_entities($self->_expand({ declarations => \@new_style })));
+      my $new_style = $self->_expand({ declarations => \@new_style });
+      $element->attr('style', $self->_encode_entities ? encode_entities($new_style) : $new_style);
     }
 
     #at this point we have a document that contains the expanded inlined stylesheet
@@ -931,7 +941,7 @@ sub _collapse_inline_styles {
     if ($i->attr('style')) {
 
       #flatten out the styles currently in place on this entity
-      my $existing_styles = decode_entities($i->attr('style'));
+      my $existing_styles = $self->_encode_entities ? decode_entities($i->attr('style')) : $i->attr('style');
       $existing_styles =~ tr/\n\t/  /;
 
       # hold the property value pairs
@@ -949,7 +959,7 @@ sub _collapse_inline_styles {
       }
 
       $collapsed_style =~ s/\s*$//;
-      $i->attr('style', encode_entities($collapsed_style));
+      $i->attr('style', $self->_encode_entities ? encode_entities($collapsed_style) : $collapsed_style);
     }
 
     #if we have specifically asked to remove the inlined attrs, remove them
