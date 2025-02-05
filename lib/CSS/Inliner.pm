@@ -43,7 +43,7 @@ sponsoring entity, MailerMailer LLC, has been sold to j2 Global.
 =cut
 
 BEGIN {
-  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent','fixlatin','encode_entities'];
+  my $members = ['stylesheet','css','html','html_tree','query','strip_attrs','relaxed','leave_style','warns_as_errors','content_warnings','agent','fixlatin','encode_entities','ignore_style_type_attr'];
 
   #generate all the getter/setter we need
   foreach my $member (@{$members}) {
@@ -79,6 +79,8 @@ leave_style - (optional) Leave style/link tags alone within <head> during inlini
 relaxed - (optional) Relaxed HTML parsing which will attempt to interpret non-HTML4 documents.
 
 encode_entities - (optional) Encode generated inline-styles (in case they contain HTML meta characters)
+
+ignore_style_type_attr - (optional) Ignore the deprecated type attribute of "style" tag
 
 NOTE: This argument is not compatible with passing an html_tree.
 
@@ -117,6 +119,7 @@ sub new {
     agent => (defined($$params{agent}) && $$params{agent}) ? $$params{agent} : 'Mozilla/4.0',
     fixlatin => eval { require Encoding::FixLatin; return 1; } ? 1 : 0,
     encode_entities => (defined($$params{encode_entities}) && $$params{encode_entities}) ? 1 : 0,
+    ignore_style_type_attr => (defined($$params{ignore_style_type_attr}) && $$params{ignore_style_type_attr}) ? 1 : 0,
   };
 
   bless $self, $class;
@@ -796,7 +799,7 @@ sub __expand_stylesheet {
     #absolutized the assetts within the stylesheet that are relative
     $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({ prefix => $1, url => $2, base => $baseref })/exsgi;
 
-    my $stylesheet = HTML::Element->new('style');
+    my $stylesheet = HTML::Element->new('style', $self->_ignore_style_type_attr ? () : (type => 'text/css'));
     $stylesheet->push_content($content);
 
     $i->replace_with($stylesheet);
@@ -812,7 +815,7 @@ sub __expand_stylesheet {
     # absolutize the assets within the stylesheet that are relative
     $content =~ s/(url\()["']?((?:(?!https?:\/\/)(?!\))[^"'])*)["']?(?=\))/$self->__fix_relative_url({ prefix => $1, url => $2, base => $baseref })/exsgi;
 
-    my $stylesheet = HTML::Element->new('style');
+    my $stylesheet = HTML::Element->new('style', $self->_ignore_style_type_attr ? () : (type => 'text/css'));
     $stylesheet->push_content($content);
 
     $i->replace_with($stylesheet);
@@ -881,7 +884,7 @@ sub _validate_html {
 
     if ($body) {
       # located spurious <style> tags that won't be handled
-      my @spurious_style = $body->look_down('_tag','style');
+      my @spurious_style = $body->look_down('_tag','style', $self->_ignore_style_type_attr ? () : ('type','text/css'));
 
       if (scalar @spurious_style) {
         $self->_report_warning({ info => 'Unexpected reference to stylesheet within document body skipped' });
@@ -903,7 +906,7 @@ sub _parse_stylesheet {
   my $stylesheet_root = $self->_relaxed() ? $self->_html_tree() : $self->_html_tree->look_down('_tag', 'head');
 
   # get the <style> nodes
-  my @style = $stylesheet_root->look_down('_tag','style');
+  my @style = $stylesheet_root->look_down('_tag','style', $self->_ignore_style_type_attr ? () : ('type','text/css'));
 
   foreach my $i (@style) {
     #process this node if the html media type is screen, all or undefined (which defaults to screen)
