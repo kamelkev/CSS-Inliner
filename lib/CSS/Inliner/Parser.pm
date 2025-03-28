@@ -117,7 +117,7 @@ necessary for later manipulation.
 This method requires you to pass in a params hash that contains a
 filename argument. For example:
 
-$self->read_file({ filename => 'myfile.css' });
+ $self->read_file({ filename => 'myfile.css' });
 
 =cut
 
@@ -151,7 +151,7 @@ rules themselves should apply as expected.
 This method requires you to pass in a params hash that contains scalar
 css data. For example:
 
-$self->read({ css => $css });
+ $self->read({ css => $css });
 
 =cut
 
@@ -267,7 +267,7 @@ Write the parsed and manipulated CSS out to a file parameter
 This method requires you to pass in a params hash that contains a
 filename argument. For example:
 
-$self->write_file({ filename => 'myfile.css' });
+ $self->write_file({ filename => 'myfile.css' });
 
 =cut
 
@@ -408,7 +408,8 @@ relevant when handling earlier versions of the standard. These rules have a prel
 with a data block consisting of various rule declarations.
 
 Adding a qualified rule is trivial, for example:
-$self->add_qualified_rule({ selector => 'p > a', block => 'color: blue;' });
+
+ $self->add_qualified_rule({ selector => 'p > a', block => 'color: blue;' });
 
 =cut
 
@@ -441,7 +442,8 @@ containing a rule type, prelude and associated data block. The standard is evolv
 examples, but these rules always start with @.
 
 At rules are a little more complex, an example:
-$self->add_at_rule({ type => '@media', prelude => 'print', block => 'body { font-size: 10pt; }' });
+
+ $self->add_at_rule({ type => '@media', prelude => 'print', block => 'body { font-size: 10pt; }' });
 
 =cut
 

@@ -22,13 +22,13 @@ CSS::Inliner - Library for converting CSS <style> blocks to inline styles.
 
 =head1 SYNOPSIS
 
-use CSS::Inliner;
+ use CSS::Inliner;
 
-my $inliner = new CSS::Inliner();
+ my $inliner = CSS::Inliner->new;
 
-$inliner->read_file({ filename => 'myfile.html' });
+ $inliner->read_file({ filename => 'myfile.html' });
 
-print $inliner->inlinify();
+ print $inliner->inlinify();
 
 =head1 DESCRIPTION
 
@@ -142,7 +142,7 @@ stylesheet reference within the document.
 This method requires you to pass in a params hash that contains a
 url argument for the requested document. For example:
 
-$self->fetch_file({ url => 'http://www.example.com' });
+ $self->fetch_file({ url => 'http://www.example.com' });
 
 Note that you can specify a user-agent to override the default user-agent
 of 'Mozilla/4.0' within the constructor. Doing so may avoid certain issues
@@ -200,12 +200,12 @@ if specified. It subsequently calls the read() method automatically.
 This method requires you to pass in a params hash that contains a
 filename argument. For example:
 
-$self->read_file({ filename => 'myfile.html' });
+ $self->read_file({ filename => 'myfile.html' });
 
 Additionally you can specify the character encoding within the file, for
 example:
 
-$self->read_file({ filename => 'myfile.html', charset => 'utf8' });
+ $self->read_file({ filename => 'myfile.html', charset => 'utf8' });
 
 Input Parameters:
  filename - name of local file presumably containing both html and css
@@ -259,7 +259,7 @@ separately. Class/ID/Names used in the markup are left alone.
 This method requires you to pass in a params hash that contains scalar
 html data. For example:
 
-$self->read({ html => $html });
+ $self->read({ html => $html });
 
 NOTE: You are required to pass a properly encoded perl reference to the
 html data. This method does *not* do the dirty work of encoding the html
